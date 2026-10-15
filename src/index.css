@@ -15,6 +15,8 @@
   --radius: 18px;
   --gutter: 20px;
   --font: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  /* Police de titre embarquée (fonctionne hors connexion). */
+  --font-display: 'Bricolage Grotesque Variable', var(--font);
 
   color-scheme: dark;
   font-family: var(--font);
@@ -67,6 +69,15 @@ button {
 button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* Bouton principal inactif : gris neutre plutôt qu'un jaune « sale ». */
+.btn-primary:disabled,
+.btn-team:disabled {
+  opacity: 1;
+  background: var(--surface-2);
+  color: var(--muted);
+  box-shadow: none;
 }
 
 :focus-visible {
@@ -1275,4 +1286,166 @@ p {
 .duel-buttons .btn-hl {
   min-height: 72px;
   font-size: 22px;
+}
+
+/* ───────── Identité : police de titre ───────── */
+
+.logo,
+.topbar h2,
+.question-prompt,
+.handoff-name,
+.end-title,
+.big-answer,
+.numpad-value,
+.hl-threshold,
+.duel-countdown,
+.podium-score,
+.scoreboard-score,
+.results-points {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 90;
+}
+
+.logo {
+  font-weight: 800;
+}
+
+/* ───────── En-tête & scores ───────── */
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.score-strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.score-strip li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  max-width: 46%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.score-strip .dot {
+  width: 10px;
+  height: 10px;
+  background: var(--team);
+}
+
+.score-strip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score-strip strong {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+
+.score-strip li.leader {
+  box-shadow: inset 0 0 0 2px var(--team);
+}
+
+.match-point {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pink) 18%, transparent);
+  color: var(--pink);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+/* ───────── Chrono : question secrète ───────── */
+
+.secret {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--pink);
+}
+
+.secret .question-prompt {
+  color: var(--text);
+}
+
+.question-secret-revealed {
+  font-size: 20px;
+  color: var(--text);
+  font-weight: 800;
+}
+
+/* ───────── Correction & toutes les réponses ───────── */
+
+.link-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.allin-icon {
+  color: var(--accent);
+}
+
+.allin .end-title {
+  font-size: clamp(30px, 9vw, 42px);
+}
+
+/* ───────── Révélation compacte (4 participants et plus) ───────── */
+
+.reveal.compact {
+  gap: 14px;
+}
+
+.reveal.compact .results li {
+  padding: 8px 12px;
+}
+
+.reveal.compact .results-answer,
+.reveal.compact .results-note {
+  font-size: 13px;
+}
+
+.reveal.compact .results-points {
+  font-size: 18px;
+}
+
+.reveal.compact .scoreboard {
+  padding: 12px;
+  gap: 6px;
+}
+
+.reveal.compact .scoreboard-row {
+  font-size: 14px;
+}
+
+.reveal.compact .big-answer {
+  font-size: clamp(40px, 12vw, 60px);
+}
+
+/* Le bouton fixe ne masque plus la fin de la liste. */
+.reveal {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
 }

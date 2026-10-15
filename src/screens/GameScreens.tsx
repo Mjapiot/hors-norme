@@ -7,16 +7,42 @@ import { Flag } from '@phosphor-icons/react/dist/csr/Flag'
 import { Lightning } from '@phosphor-icons/react/dist/csr/Lightning'
 import { Sword } from '@phosphor-icons/react/dist/csr/Sword'
 import { X } from '@phosphor-icons/react/dist/csr/X'
+import { ArrowCounterClockwise } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise'
+import { Envelope } from '@phosphor-icons/react/dist/csr/Envelope'
+import { LockKey } from '@phosphor-icons/react/dist/csr/LockKey'
+import { SpeakerHigh } from '@phosphor-icons/react/dist/csr/SpeakerHigh'
+import { SpeakerSlash } from '@phosphor-icons/react/dist/csr/SpeakerSlash'
 import { Ico, ROUND_ICONS, THEME_ICONS } from '../components/Icons'
 import { NumPad } from '../components/NumPad'
 import { Timer } from '../components/Timer'
 import { applyKey, colorFor, formatNumber, frenchSpacing, parseDraft } from '../lib/format'
 import { ROUND_LABELS, THEMES } from '../game/types'
 import type { Answer, GameState, Round } from '../game/types'
-import { currentDuel, isDoubleRound } from '../game/engine'
+import { canUndo, currentDuel, isDoubleRound, participantAt } from '../game/engine'
+import { isSoundOn, play, setSoundOn, unlockAudio } from '../lib/sound'
 import { higherLowerAnswer } from '../game/scoring'
 
 export const CHRONO_SECONDS = 30
+/** Une équipe est « à balle de match » à moins de ce nombre de points de l'objectif (≈ une manche réussie). */
+export const MATCH_POINT_GAP = 4
+
+function SoundToggle() {
+  const [on, setOn] = useState(isSoundOn())
+  return (
+    <button
+      type="button"
+      className="icon-btn"
+      aria-label={on ? 'Couper le son' : 'Activer le son'}
+      aria-pressed={on}
+      onClick={() => {
+        setSoundOn(!on)
+        setOn(!on)
+      }}
+    >
+      <Ico icon={on ? SpeakerHigh : SpeakerSlash} size={20} />
+    </button>
+  )
+}
 
 export function GameHeader({ state, onQuit }: { state: GameState; onQuit: () => void }) {
   const { end } = state.config
@@ -31,22 +57,42 @@ export function GameHeader({ state, onQuit }: { state: GameState; onQuit: () => 
           </>
         )}
       </span>
-      <button
-        type="button"
-        className="icon-btn"
-        aria-label="Quitter la partie"
-        onClick={() => {
-          if (window.confirm('Quitter la partie en cours ?')) onQuit()
-        }}
-      >
-        <Ico icon={X} size={20} />
-      </button>
+      <span className="topbar-actions">
+        <SoundToggle />
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Quitter la partie"
+          onClick={() => {
+            if (window.confirm('Quitter la partie en cours ?')) onQuit()
+          }}
+        >
+          <Ico icon={X} size={20} />
+        </button>
+      </span>
     </header>
+  )
+}
+
+/** Scores toujours visibles pendant la question. */
+export function ScoreStrip({ state }: { state: GameState }) {
+  const best = Math.max(...state.scores)
+  return (
+    <ul className="score-strip" aria-label="Scores">
+      {state.config.names.map((name, i) => (
+        <li key={i} className={state.scores[i] === best && best > 0 ? 'leader' : ''} style={{ '--team': colorFor(i) } as CSSProperties}>
+          <span className="dot" />
+          <span className="score-strip-name">{name}</span>
+          <strong>{state.scores[i]}</strong>
+        </li>
+      ))}
+    </ul>
   )
 }
 
 function QuestionCard({ round, double }: { round: Round; double: boolean }) {
   const theme = THEMES[round.question.theme]
+  const secret = round.kind === 'chrono'
   return (
     <div className="question-card">
       <div className="question-meta">
@@ -64,77 +110,131 @@ function QuestionCard({ round, double }: { round: Round; double: boolean }) {
           <Ico icon={Lightning} size={18} weight="fill" /> Dernière question : points doublés
         </p>
       )}
-      <p className="question-prompt">{frenchSpacing(round.question.prompt)}</p>
-      {round.kind === 'higherlower' && (
-        <p className="question-sub">
-          Plus ou moins de <strong>{formatNumber(round.threshold)} {round.question.unit}</strong> ?
-        </p>
+      {secret ? (
+        <div className="secret">
+          <Ico icon={LockKey} size={40} weight="duotone" />
+          <p className="question-prompt">Question secrète</p>
+          <p className="question-sub">Elle s’affiche quand vous avez le téléphone en main : {CHRONO_SECONDS} secondes pour répondre.</p>
+        </div>
+      ) : (
+        <>
+          <p className="question-prompt">{frenchSpacing(round.question.prompt)}</p>
+          {round.kind === 'higherlower' && (
+            <p className="question-sub">
+              Plus ou moins de <strong>{formatNumber(round.threshold)} {round.question.unit}</strong>&nbsp;?
+            </p>
+          )}
+          {round.kind !== 'higherlower' && round.question.unit && <p className="question-unit">Réponse en {round.question.unit}</p>}
+        </>
       )}
-      {round.kind !== 'higherlower' && round.question.unit && <p className="question-unit">Réponse en {round.question.unit}</p>}
     </div>
   )
 }
 
 const KIND_HELP: Record<Round['kind'], string> = {
   classic: 'Chacun tape son estimation en secret. Plus on est précis, plus on marque.',
-  chrono: `Attention : seulement ${CHRONO_SECONDS} secondes pour répondre une fois le téléphone en main !`,
+  chrono: 'Pas de triche : personne ne voit la question avant son tour.',
   higherlower: 'Plus ou moins ? 1 point pour chaque bonne réponse.',
   ranking: '3 points si tout est bien classé, 1 point si 2 éléments sont bien placés.',
+}
+
+function MatchPoint({ state }: { state: GameState }) {
+  const { end } = state.config
+  if (end.type !== 'target') return null
+  const close = state.config.names.filter((_, i) => state.scores[i] < end.points && end.points - state.scores[i] <= MATCH_POINT_GAP)
+  if (close.length === 0) return null
+  return (
+    <p className="match-point">
+      <Ico icon={Flag} size={18} weight="fill" /> Balle de match pour {close.join(', ')}
+    </p>
+  )
 }
 
 export function QuestionScreen({ state, onGo }: { state: GameState; onGo: () => void }) {
   const round = state.rounds[state.index]
   return (
     <main className="screen question">
+      <ScoreStrip state={state} />
+      <MatchPoint state={state} />
       <QuestionCard round={round} double={isDoubleRound(state)} />
       <p className="help">{KIND_HELP[round.kind]}</p>
       <div className="sticky-cta">
         <button type="button" className="btn btn-primary" onClick={onGo}>
-          À vos réponses !
+          À vos réponses&nbsp;!
         </button>
       </div>
     </main>
   )
 }
 
-export function HandoffScreen({ state, onReady }: { state: GameState; onReady: () => void }) {
-  const name = state.config.names[state.turn]
-  const color = colorFor(state.turn)
+function UndoLink({ state, onUndo }: { state: GameState; onUndo: () => void }) {
+  if (!canUndo(state)) return null
+  const prev = state.config.names[participantAt(state, state.turn - 1)]
+  return (
+    <button type="button" className="link link-icon" onClick={onUndo}>
+      <Ico icon={ArrowCounterClockwise} size={16} /> Corriger la réponse de {prev}
+    </button>
+  )
+}
+
+export function HandoffScreen({ state, onReady, onUndo }: { state: GameState; onReady: () => void; onUndo: () => void }) {
+  const who = participantAt(state, state.turn)
+  const color = colorFor(who)
   return (
     <main className="screen handoff" style={{ '--team': color } as CSSProperties}>
       <p className="eyebrow">
         {state.turn + 1}/{state.config.names.length} · Passe le téléphone à
       </p>
-      <h2 className="handoff-name">{name}</h2>
+      <h2 className="handoff-name">{state.config.names[who]}</h2>
       <p className="help help-icon">
         <Ico icon={EyeSlash} size={18} /> Les autres, on ne regarde pas&nbsp;!
       </p>
       <button type="button" className="btn btn-team" onClick={onReady}>
         {state.config.mode === 'teams' ? 'C’est nous, on est prêts\u00a0!' : 'C’est moi, je suis prêt·e\u00a0!'}
       </button>
+      <UndoLink state={state} onUndo={onUndo} />
+    </main>
+  )
+}
+
+/** Toutes les réponses sont saisies : dernière chance de corriger, puis révélation. */
+export function AllInScreen({ state, onReveal, onUndo }: { state: GameState; onReveal: () => void; onUndo: () => void }) {
+  return (
+    <main className="screen handoff allin">
+      <Ico icon={Envelope} size={56} weight="duotone" className="allin-icon" />
+      <h2 className="end-title">Toutes les réponses sont là</h2>
+      <p className="help">Posez le téléphone au milieu de la table…</p>
+      <button
+        type="button"
+        className="btn btn-primary"
+        onClick={() => {
+          unlockAudio()
+          onReveal()
+        }}
+      >
+        Révéler&nbsp;!
+      </button>
+      <UndoLink state={state} onUndo={onUndo} />
     </main>
   )
 }
 
 export function InputScreen({ state, onSubmit }: { state: GameState; onSubmit: (a: Answer) => void }) {
   const round = state.rounds[state.index]
-  const color = colorFor(state.turn)
+  const who = participantAt(state, state.turn)
+  const color = colorFor(who)
   return (
     <main className="screen input" style={{ '--team': color } as CSSProperties}>
       <p className="input-who">
-        <span className="dot" style={{ background: color }} /> {state.config.names[state.turn]}
+        <span className="dot" style={{ background: color }} /> {state.config.names[who]}
       </p>
-      <QuestionCompact round={round} />
+      <p className={`question-compact${round.kind === 'chrono' ? ' question-secret-revealed' : ''}`}>{frenchSpacing(round.question.prompt)}</p>
       {/* key = turn : saisie remise à zéro pour chaque joueur */}
       {(round.kind === 'classic' || round.kind === 'chrono') && <NumberInput key={state.turn} round={round} onSubmit={onSubmit} />}
       {round.kind === 'higherlower' && <HigherLowerInput key={state.turn} round={round} onSubmit={onSubmit} />}
       {round.kind === 'ranking' && <RankingInput key={state.turn} round={round} onSubmit={onSubmit} />}
     </main>
   )
-}
-
-function QuestionCompact({ round }: { round: Round }) {
-  return <p className="question-compact">{frenchSpacing(round.question.prompt)}</p>
 }
 
 function NumberInput({ round, onSubmit }: { round: Extract<Round, { kind: 'classic' | 'chrono' }>; onSubmit: (a: Answer) => void }) {
@@ -146,7 +246,15 @@ function NumberInput({ round, onSubmit }: { round: Extract<Round, { kind: 'class
   return (
     <>
       {round.kind === 'chrono' && <Timer seconds={CHRONO_SECONDS} onTimeout={submit} />}
-      <NumPad value={draft} onKey={(k) => setDraft((d) => applyKey(d, k, year))} unit={round.question.unit} year={year} />
+      <NumPad
+        value={draft}
+        onKey={(k) => {
+          play('tap')
+          setDraft((d) => applyKey(d, k, year))
+        }}
+        unit={round.question.unit}
+        year={year}
+      />
       <button type="button" className="btn btn-team" disabled={value === null} onClick={submit}>
         Valider
       </button>
@@ -220,7 +328,13 @@ export function DuelScreen({ state, onResolve }: { state: GameState; onResolve: 
 
   useEffect(() => {
     if (stage !== 'countdown') return
-    const id = window.setTimeout(() => (count <= 1 ? setStage('go') : setCount(count - 1)), 700)
+    play('tick')
+    const id = window.setTimeout(() => {
+      if (count <= 1) {
+        play('go')
+        setStage('go')
+      } else setCount(count - 1)
+    }, 700)
     return () => window.clearTimeout(id)
   }, [stage, count])
 
@@ -238,11 +352,12 @@ export function DuelScreen({ state, onResolve }: { state: GameState; onResolve: 
   const tap = (team: number, choice: 'plus' | 'moins') => {
     if (stage !== 'go' || out.includes(team)) return
     if (choice === good) {
-      navigator.vibrate?.([40, 30, 40])
+      play('win')
       setWinner(team)
       setStage('done')
       return
     }
+    play('bad')
     const nextOut = [...out, team]
     setOut(nextOut)
     if (nextOut.length === tied.length) setStage('done')
@@ -263,7 +378,14 @@ export function DuelScreen({ state, onResolve }: { state: GameState; onResolve: 
       </p>
 
       {stage === 'ready' && (
-        <button type="button" className="btn btn-primary" onClick={() => setStage('countdown')}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => {
+            unlockAudio()
+            setStage('countdown')
+          }}
+        >
           Lancer le duel
         </button>
       )}

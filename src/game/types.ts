@@ -31,6 +31,8 @@ interface QuestionBase {
   difficulty: 1 | 2 | 3
   /** null tant que la question n'a pas été relue par un humain. */
   verified_at: string | null
+  /** Sujet principal (« burj-khalifa ») : deux questions sur le même sujet ne tombent jamais dans la même partie. */
+  subject?: string
 }
 
 export interface NumberQuestion extends QuestionBase {
@@ -107,7 +109,8 @@ export interface RoundResult {
   duel: { tied: number[]; winner: number | null; resolved: boolean } | null
 }
 
-export type Phase = 'question' | 'handoff' | 'input' | 'reveal' | 'duel' | 'end'
+/** allin = toutes les réponses sont saisies, on attend la révélation (dernière chance de corriger). */
+export type Phase = 'question' | 'handoff' | 'input' | 'allin' | 'reveal' | 'duel' | 'end'
 
 export interface GameState {
   config: GameConfig
@@ -116,8 +119,10 @@ export interface GameState {
   duels: DuelQuestion[]
   index: number
   phase: Phase
+  /** Nombre de participants ayant déjà répondu à la manche en cours. */
   turn: number
-  answers: Answer[]
+  /** Réponses indexées par participant (null = pas encore répondu). */
+  answers: (Answer | null)[]
   scores: number[]
   results: RoundResult[]
 }

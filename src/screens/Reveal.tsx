@@ -6,6 +6,9 @@ import { Sword } from '@phosphor-icons/react/dist/csr/Sword'
 import { Trophy } from '@phosphor-icons/react/dist/csr/Trophy'
 import { Ico, TIER_ICONS } from '../components/Icons'
 import { colorFor, formatNumber, frenchSpacing } from '../lib/format'
+import { isAdmin } from '../lib/admin'
+import { celebrate } from '../lib/celebrate'
+import { play } from '../lib/sound'
 import { correctRanking } from '../game/scoring'
 import { isOver, standings } from '../game/engine'
 import type { Answer, Breakdown, GameState, NumberQuestion, Round } from '../game/types'
@@ -40,16 +43,17 @@ function BigAnswer({ question }: { question: NumberQuestion }) {
 }
 
 /**
- * Ligne graduée : la bonne réponse au centre.
- * Échelle relative (0 → 2× la réponse) ou en écart absolu pour les années.
+ * Ligne graduée, bonne réponse au centre.
+ * Échelle logarithmique (×2 et ÷2 sont à la même distance) pour que les réponses très éloignées
+ * ne s'entassent pas sur les bords ; écart absolu pour les années.
  */
-function ScaleLine({ question, answers }: { question: NumberQuestion; answers: Answer[] }) {
-  const guesses = answers.map((a) => (a.kind === 'number' ? a.value : null))
-  const spread = Math.max(1, ...guesses.map((g) => (g === null ? 0 : Math.abs(g - question.answer)))) * 1.15
-  const position = (g: number) => {
-    const pos = question.year || question.answer <= 0 ? 0.5 + (g - question.answer) / (2 * spread) : g / question.answer / 2
-    return Math.min(1, Math.max(0, pos)) * 100
-  }
+function ScaleLine({ question, answers }: { question: NumberQuestion; answers: (Answer | null)[] }) {
+  const guesses = answers.map((a) => (a?.kind === 'number' ? a.value : null))
+  const valid = guesses.filter((g): g is number => g !== null)
+  const linear = question.year || question.answer <= 0
+  const offset = (g: number) => (linear ? g - question.answer : Math.log10(Math.max(g, question.answer / 1000) / question.answer))
+  const spread = Math.max(linear ? 1 : 0.3, ...valid.map((g) => Math.abs(offset(g)))) * 1.15
+  const position = (g: number) => Math.min(1, Math.max(0, 0.5 + offset(g) / (2 * spread))) * 100
   return (
     <div className="scale" aria-hidden="true">
       <div className="scale-track" />
@@ -63,7 +67,8 @@ function ScaleLine({ question, answers }: { question: NumberQuestion; answers: A
   )
 }
 
-function answerLabel(round: Round, answer: Answer): string {
+function answerLabel(round: Round, answer: Answer | null): string {
+  if (!answer) return '—'
   if (answer.kind === 'number') {
     if (answer.value === null) return '—'
     return formatNumber(answer.value, round.kind !== 'ranking' && round.question.year)
@@ -80,11 +85,13 @@ function formatDelta(points: number): string {
 
 function SourceLine({ round }: { round: Round }) {
   const q = round.question
+  const admin = isAdmin()
   return (
     <p className="source">
       Source : {q.source}
-      {q.verified_at === null && ' · à vérifier'}
-      {q.perishable && ' · record susceptible d’évoluer'}
+      {admin && (q.verified_at === null ? ' · à vérifier' : ` · vérifié le ${q.verified_at}`)}
+      {admin && q.perishable && ' · périssable'}
+      {admin && ` · ${q.id}`}
     </p>
   )
 }
@@ -119,9 +126,21 @@ export function RevealScreen({ state, onNext, onDuel }: { state: GameState; onNe
     .sort((a, b) => b.points - a.points || a.i - b.i)
   const last = isOver(state)
   const bonusRound = round.kind === 'ranking' || round.kind === 'higherlower'
+  const compact = names.length >= 4
+  const jackpot = result.tiers.some((t) => t === 'exact' || t === 'perfect')
+
+  // Son + confettis une seule fois, à l'arrivée sur l'écran (pas après un duel).
+  const resultCount = state.results.length
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      play(jackpot ? 'exact' : 'reveal')
+      if (jackpot) celebrate()
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [resultCount])
 
   return (
-    <main className="screen reveal">
+    <main className={`screen reveal${compact ? ' compact' : ''}`}>
       <p className="question-compact">{frenchSpacing(round.question.prompt)}</p>
 
       {(round.kind === 'classic' || round.kind === 'chrono') && (
@@ -237,6 +256,14 @@ export function EndScreen({ state, onReplay, onHome }: { state: GameState; onRep
   const ranking = standings(state.scores)
   const podium = ranking.slice(0, 3)
   const winners = ranking.filter((r) => r.rank === 1).map((r) => state.config.names[r.index])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      play('win')
+      celebrate(true)
+    }, 600)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   return (
     <main className="screen end">

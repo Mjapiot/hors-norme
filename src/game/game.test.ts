@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { QUESTIONS } from '../data/questions'
-import { buildDuels, buildRounds, makeThreshold, roundNice } from './deck'
-import { initialState, isDoubleRound, isOver, reducer, standings } from './engine'
+import { buildDuels, buildRounds, makeThreshold, roundNice, subjectKey, subjectsOf } from './deck'
+import { canUndo, initialState, isDoubleRound, isOver, participantAt, reducer, standings } from './engine'
 import { isAbsurd, precisionFor, resolveDuel, scoreHigherLower, scoreNumber, scoreRanking, shareTie } from './scoring'
 import type { GameConfig, GameState, NumberQuestion } from './types'
 import { applyKey, formatDraft, frenchSpacing, parseDraft } from '../lib/format'
@@ -116,10 +116,26 @@ describe('deck', () => {
     expect(roundNice(0.4567)).toBe(0.46)
   })
 
-  it('le seuil plus/moins est toujours différent de la réponse', () => {
+  it('le seuil plus/moins est différent de la réponse, à environ 8 à 30 % d’écart', () => {
     const rng = seeded(1)
-    for (const a of [5, 9.58, 8849, 384400, 2]) {
-      for (let k = 0; k < 50; k++) expect(makeThreshold(a, rng)).not.toBe(a)
+    for (const a of [5, 9.58, 8849, 384400, 2, 12]) {
+      for (let k = 0; k < 50; k++) {
+        const t = makeThreshold(a, rng)
+        expect(t).not.toBe(a)
+        const gap = Math.abs(t - a) / a
+        expect(gap).toBeGreaterThanOrEqual(0.08)
+        expect(gap).toBeLessThanOrEqual(0.3)
+      }
+    }
+  })
+
+  it('jamais deux questions sur le même sujet dans une partie (y compris via un classement)', () => {
+    expect(subjectKey('Baïkal')).toBe('baikal')
+    expect(subjectKey('Mont Blanc')).toBe('mont-blanc')
+    for (let seed = 1; seed <= 200; seed++) {
+      const rounds = buildRounds(QUESTIONS, config({ end: { type: 'target', points: 15 } }), new Set(), seeded(seed))
+      const all = rounds.flatMap((r) => subjectsOf(r.question))
+      expect(new Set(all).size).toBe(all.length)
     }
   })
 
@@ -159,7 +175,7 @@ describe('moteur de partie', () => {
       s = reducer(s, { type: 'ready' })
       s = reducer(s, { type: 'submit', answer: { kind: 'number', value: v } })
     }
-    return s!
+    return reducer(s, { type: 'reveal' })!
   }
 
   it('enchaîne passe-téléphone → saisie → révélation', () => {
@@ -175,6 +191,8 @@ describe('moteur de partie', () => {
     expect(s!.turn).toBe(1)
     s = reducer(s, { type: 'ready' })
     s = reducer(s, { type: 'submit', answer: { kind: 'number', value: 2 } })
+    expect(s!.phase).toBe('allin')
+    s = reducer(s, { type: 'reveal' })
     expect(s!.phase).toBe('reveal')
     expect(s!.results).toHaveLength(1)
   })
@@ -218,10 +236,12 @@ describe('moteur de partie', () => {
     const answer = (rounds[0].question as NumberQuestion).answer
     let s: GameState | null = initialState(cfg, rounds, buildDuels(QUESTIONS, rounds, seeded(8)))
     s = reducer(s, { type: 'beginAnswers' })
+    // Manche 0 : l'ordre de passage commence par A (index 0).
     for (const v of [answer * 1.1, answer * 0.9, answer * 10]) {
       s = reducer(s, { type: 'ready' })
       s = reducer(s, { type: 'submit', answer: { kind: 'number', value: v } })
     }
+    s = reducer(s, { type: 'reveal' })
     expect(s!.phase).toBe('reveal')
     expect(s!.scores).toEqual([1, 1, 0]) // C : −1 mais plancher à 0
     expect(reducer(s, { type: 'next' })).toBe(s) // duel obligatoire avant de continuer
@@ -240,6 +260,35 @@ describe('moteur de partie', () => {
     const ids = new Set(rounds.map((r) => r.question.id))
     expect(duels.length).toBeGreaterThan(0)
     expect(duels.every((d) => !ids.has(d.question.id) && !d.question.year && d.threshold !== d.question.answer)).toBe(true)
+  })
+
+  it('l’ordre de passage tourne à chaque manche et les réponses restent rangées par participant', () => {
+    const cfg = config({ names: ['A', 'B', 'C'], bonus: false, end: { type: 'rounds', count: 5 } })
+    let s: GameState | null = { ...initialState(cfg, buildRounds(QUESTIONS, cfg, new Set(), seeded(12))), index: 1 }
+    expect([0, 1, 2].map((t) => participantAt(s!, t))).toEqual([1, 2, 0])
+    s = reducer(s, { type: 'beginAnswers' })
+    s = reducer(s, { type: 'ready' })
+    s = reducer(s, { type: 'submit', answer: { kind: 'number', value: 42 } })
+    expect(s!.answers[1]).toEqual({ kind: 'number', value: 42 })
+    expect(s!.answers[0]).toBeNull()
+  })
+
+  it('corriger : on revient à la saisie du participant précédent, jamais au chrono', () => {
+    const cfg = config({ names: ['A', 'B'], bonus: false, end: { type: 'rounds', count: 5 } })
+    let s: GameState | null = initialState(cfg, buildRounds(QUESTIONS, cfg, new Set(), seeded(13)))
+    s = reducer(s, { type: 'beginAnswers' })
+    expect(canUndo(s!)).toBe(false)
+    s = reducer(s, { type: 'ready' })
+    s = reducer(s, { type: 'submit', answer: { kind: 'number', value: 1 } })
+    s = reducer(s, { type: 'ready' })
+    s = reducer(s, { type: 'submit', answer: { kind: 'number', value: 2 } })
+    expect(s!.phase).toBe('allin')
+    s = reducer(s, { type: 'undo' })
+    expect(s!.phase).toBe('handoff')
+    expect(s!.turn).toBe(1)
+    expect(s!.answers).toEqual([{ kind: 'number', value: 1 }, null])
+    const chrono = { ...s!, rounds: s!.rounds.map((r) => (r.kind === 'classic' ? { ...r, kind: 'chrono' as const } : r)) }
+    expect(canUndo(chrono)).toBe(false)
   })
 
   it('classement final avec ex-æquo', () => {

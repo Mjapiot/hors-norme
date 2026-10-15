@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { play } from '../lib/sound'
 
 interface Props {
   seconds: number
@@ -16,13 +17,17 @@ export function Timer({ seconds, onTimeout }: Props) {
   useEffect(() => {
     const endAt = Date.now() + seconds * 1000
     let fired = false
+    let shown = seconds
     const id = window.setInterval(() => {
       const remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000))
+      // Tic-tac sur les 5 dernières secondes.
+      if (remaining !== shown && remaining > 0 && remaining <= 5) play('tick')
+      shown = remaining
       setLeft(remaining)
       if (remaining === 0 && !fired) {
         fired = true
         window.clearInterval(id)
-        navigator.vibrate?.([80, 40, 80])
+        play('bad')
         timeoutRef.current()
       }
     }, 200)

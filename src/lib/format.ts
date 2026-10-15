@@ -33,17 +33,18 @@ export function parseDraft(draft: string): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+/** 10 teintes réparties sur le cercle chromatique, toutes lisibles sur fond sombre. */
 export const TEAM_COLORS = [
-  '#FFD23F',
-  '#FF5C8A',
-  '#3EE6D3',
-  '#9B7BFF',
-  '#FF8A3D',
-  '#7CE35B',
-  '#4DA8FF',
-  '#F25CFF',
-  '#FFFFFF',
-  '#C9A27E',
+  '#FFD23F', // jaune
+  '#FF5C8A', // rose
+  '#3EE6D3', // turquoise
+  '#9B7BFF', // violet
+  '#FF8A3D', // orange
+  '#7CE35B', // vert
+  '#4DA8FF', // bleu
+  '#F25CFF', // magenta
+  '#FF4D4D', // rouge
+  '#D4F53C', // citron vert
 ]
 
 export const colorFor = (index: number) => TEAM_COLORS[index % TEAM_COLORS.length]

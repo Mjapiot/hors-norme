@@ -30,15 +30,41 @@ export function roundNice(value: number): number {
   return Number(value.toPrecision(2))
 }
 
-/** Seuil franchement différent de la réponse (entre 15 % et 50 % d'écart). */
+/** Seuil assez proche pour faire hésiter (10 à 25 % d'écart), mais jamais égal à la réponse. */
 export function makeThreshold(answer: number, rng: Rng): number {
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const delta = 0.15 + rng() * 0.35
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const delta = 0.1 + rng() * 0.15
     const factor = rng() < 0.5 ? 1 - delta : 1 + delta
     const t = roundNice(answer * factor)
-    if (t !== answer && Math.abs(t - answer) / Math.abs(answer || 1) >= 0.1) return t
+    if (t !== answer && Math.abs(t - answer) / Math.abs(answer || 1) >= 0.08) return t
   }
-  return roundNice(answer * 1.5)
+  return roundNice(answer * 1.2)
+}
+
+/** Clé normalisée : « Baïkal » → « baikal », « Mont Blanc » → « mont-blanc ». */
+export function subjectKey(label: string): string {
+  return label
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+/** Sujets couverts par une question : son sujet déclaré + les éléments d'un classement. */
+export function subjectsOf(q: Question): string[] {
+  const keys = q.subject ? [subjectKey(q.subject)] : []
+  if (q.type === 'ranking') keys.push(...q.items.map((it) => subjectKey(it.label)))
+  return keys
+}
+
+/** Retire et renvoie la première question dont aucun sujet n'a déjà été joué. */
+function takeFresh<T extends Question>(pool: T[], used: Set<string>, accept: (q: T) => boolean = () => true): T | undefined {
+  const pos = pool.findIndex((q) => accept(q) && subjectsOf(q).every((k) => !used.has(k)))
+  if (pos < 0) return undefined
+  const [q] = pool.splice(pos, 1)
+  subjectsOf(q).forEach((k) => used.add(k))
+  return q
 }
 
 export function isBonusSlot(index: number): boolean {
@@ -58,6 +84,7 @@ export function buildRounds(
   const total = config.end.type === 'rounds' ? config.end.count : TARGET_MODE_MAX_ROUNDS
   const rotationStart = Math.floor(rng() * BONUS_ROTATION.length)
   const rounds: Round[] = []
+  const usedSubjects = new Set<string>()
   let bonusCount = 0
 
   for (let i = 0; i < total; i++) {
@@ -65,34 +92,35 @@ export function buildRounds(
     if (config.bonus && isBonusSlot(i)) {
       kind = BONUS_ROTATION[(rotationStart + bonusCount) % BONUS_ROTATION.length]
       bonusCount++
-      if (kind === 'ranking' && rankings.length === 0) kind = 'higherlower'
     }
 
     if (kind === 'ranking') {
-      const question = rankings.shift()!
-      const indices = question.items.map((_, idx) => idx)
-      let order = shuffle(indices, rng)
-      // Évite de proposer les éléments déjà dans le bon ordre.
-      const sorted = [...indices].sort((a, b) => question.items[a].value - question.items[b].value)
-      if (order.every((v, k) => v === sorted[k])) order = [...order].reverse()
-      rounds.push({ kind, question, order })
-      continue
+      const question = takeFresh(rankings, usedSubjects)
+      if (question) {
+        const indices = question.items.map((_, idx) => idx)
+        let order = shuffle(indices, rng)
+        // Évite de proposer les éléments déjà dans le bon ordre.
+        const sorted = [...indices].sort((a, b) => question.items[a].value - question.items[b].value)
+        if (order.every((v, k) => v === sorted[k])) order = [...order].reverse()
+        rounds.push({ kind: 'ranking', question, order })
+        continue
+      }
+      kind = 'higherlower'
     }
 
     if (kind === 'higherlower') {
-      // Un seuil à ±30 % n'a pas de sens pour une année.
-      const pos = numbers.findIndex((q) => !q.year)
-      if (pos >= 0) {
-        const [question] = numbers.splice(pos, 1)
-        rounds.push({ kind, question, threshold: makeThreshold(question.answer, rng) })
+      // Un seuil à ±20 % n'a pas de sens pour une année.
+      const question = takeFresh(numbers, usedSubjects, (q) => !q.year)
+      if (question) {
+        rounds.push({ kind: 'higherlower', question, threshold: makeThreshold(question.answer, rng) })
         continue
       }
       kind = 'chrono'
     }
 
-    const question = numbers.shift()
+    const question = takeFresh(numbers, usedSubjects)
     if (!question) break
-    rounds.push({ kind, question })
+    rounds.push({ kind: kind === 'chrono' ? 'chrono' : 'classic', question })
   }
   return rounds
 }
@@ -106,7 +134,10 @@ export const DUEL_RESERVE = 8
  */
 export function buildDuels(questions: Question[], rounds: Round[], rng: Rng = Math.random): DuelQuestion[] {
   const used = new Set(rounds.map((r) => r.question.id))
-  const pool = questions.filter((q): q is NumberQuestion => q.type === 'number' && !q.year && !used.has(q.id))
+  const usedSubjects = new Set(rounds.flatMap((r) => subjectsOf(r.question)))
+  const pool = questions.filter(
+    (q): q is NumberQuestion => q.type === 'number' && !q.year && !used.has(q.id) && subjectsOf(q).every((k) => !usedSubjects.has(k)),
+  )
   return shuffle(pool, rng)
     .slice(0, DUEL_RESERVE)
     .map((question) => ({ question, threshold: makeThreshold(question.answer, rng) }))

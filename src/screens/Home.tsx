@@ -1,5 +1,6 @@
 import { InstallHint } from '../components/InstallHint'
 import { QUESTIONS } from '../data/questions'
+import { isAdmin } from '../lib/admin'
 
 interface Props {
   canResume: boolean
@@ -47,7 +48,10 @@ export function Home({ canResume, onNew, onResume }: Props) {
         </ol>
       </details>
 
-      <p className="footnote">{QUESTIONS.length} questions · version bêta, réponses en cours de vérification</p>
+      <p className="footnote">
+        {QUESTIONS.length} questions
+        {isAdmin() && ` · admin : ${QUESTIONS.filter((q) => q.verified_at).length} vérifiées`}
+      </p>
     </main>
   )
 }

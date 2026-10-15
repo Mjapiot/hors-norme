@@ -26,10 +26,12 @@ export function remove(key: string): void {
 }
 
 export const KEYS = {
-  game: 'hn:game:v2',
+  game: 'hn:game:v3',
   config: 'hn:config:v2',
   seen: 'hn:seen:v1',
   installHint: 'hn:install-hint-dismissed',
+  sound: 'hn:sound',
+  admin: 'hn:admin',
 }
 
 const SEEN_LIMIT = 400

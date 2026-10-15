@@ -34,6 +34,10 @@ Pour tester sur un iPhone du même réseau Wi-Fi : `npm run dev -- --host`, puis
 
 **Dernière question** (mode 5 ou 10 questions) : gains doublés (le malus reste à −1).
 
+**Déroulé** : l'ordre de passage tourne à chaque manche ; chacun peut « corriger » la réponse précédente avant de passer
+le téléphone (sauf au Chrono, dont la question reste secrète jusqu'à la saisie) ; deux questions sur le même sujet
+ne tombent jamais dans la même partie ; balle de match annoncée à 4 pts de l'objectif.
+
 **Fin de partie** : 5 ou 10 questions, ou objectif 8 / 12 / 15 pts (leader unique requis). Objectifs calibrés par simulation :
 le leader marque ≈ 1,2 pt/manche, soit ≈ 8, 11 et 14 manches en médiane.
 
@@ -42,11 +46,16 @@ le leader marque ≈ 1,2 pt/manche, soit ≈ 8, 11 et 14 manches en médiane.
 ```
 src/
   game/        cœur du jeu, pur et testé : types, scoring, deck (tirage), engine (machine d'état)
-  data/        questions.ts — 157 questions de départ (toutes verified_at = null)
+  data/        questions.ts — 257 questions (8 thèmes), dont 126 vérifiées en ligne (verified_at)
   screens/     Accueil, Configuration, Question / Passe-téléphone / Saisie, Révélation / Podium
   components/  NumPad, Timer, InstallHint, Icons (Phosphor, MIT)
   lib/         stockage local, formatage français
 ```
+
+## Mode admin
+
+Ouvrir l'app avec `?admin=1` affiche, sous chaque réponse, l'état de vérification et l'identifiant de la question
+(`?admin=0` pour revenir au mode public).
 
 ## ⚠️ Contenu à relire
 

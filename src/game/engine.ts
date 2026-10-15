@@ -6,6 +6,8 @@ export type Action =
   | { type: 'beginAnswers' }
   | { type: 'ready' }
   | { type: 'submit'; answer: Answer }
+  | { type: 'undo' }
+  | { type: 'reveal' }
   | { type: 'startDuel' }
   | { type: 'resolveDuel'; winner: number | null }
   | { type: 'next' }
@@ -23,6 +25,18 @@ export function initialState(config: GameConfig, rounds: Round[], duels: DuelQue
     scores: config.names.map(() => 0),
     results: [],
   }
+}
+
+/** L'ordre de passage tourne : à la manche k, c'est le participant k qui commence. */
+export function participantAt(state: GameState, turn: number): number {
+  const n = state.config.names.length
+  return (state.index + turn) % n
+}
+
+/** Peut-on revenir corriger la réponse précédente ? (jamais au chrono : le temps repartirait à zéro) */
+export function canUndo(state: GameState): boolean {
+  const kind = state.rounds[state.index]?.kind
+  return kind !== 'chrono' && state.turn > 0 && (state.phase === 'handoff' || state.phase === 'allin')
 }
 
 /** Dernière question d'une partie en nombre de questions : elle compte double. */
@@ -67,7 +81,7 @@ export function reducer(state: GameState | null, action: Action): GameState | nu
   switch (action.type) {
     case 'beginAnswers':
       if (state.phase !== 'question') return state
-      return { ...state, phase: 'handoff', turn: 0, answers: [] }
+      return { ...state, phase: 'handoff', turn: 0, answers: state.config.names.map(() => null) }
 
     case 'ready':
       if (state.phase !== 'handoff') return state
@@ -75,10 +89,21 @@ export function reducer(state: GameState | null, action: Action): GameState | nu
 
     case 'submit': {
       if (state.phase !== 'input') return state
-      const answers = [...state.answers, action.answer]
-      if (answers.length < state.config.names.length) {
-        return { ...state, answers, turn: state.turn + 1, phase: 'handoff' }
-      }
+      const answers = state.answers.map((a, i) => (i === participantAt(state, state.turn) ? action.answer : a))
+      const turn = state.turn + 1
+      return { ...state, answers, turn, phase: turn < state.config.names.length ? 'handoff' : 'allin' }
+    }
+
+    case 'undo': {
+      if (!canUndo(state)) return state
+      const turn = state.turn - 1
+      const answers = state.answers.map((a, i) => (i === participantAt(state, turn) ? null : a))
+      return { ...state, answers, turn, phase: 'handoff' }
+    }
+
+    case 'reveal': {
+      if (state.phase !== 'allin') return state
+      const answers = state.answers.map((a) => a ?? ({ kind: 'number', value: null } as Answer))
       let result = scoreRound(state.rounds[state.index], answers, { multiplier: isDoubleRound(state) ? 2 : 1 })
       if (result.duel && !currentDuel(state)) result = shareTie(result)
       return {

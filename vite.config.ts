@@ -28,7 +28,9 @@ export default defineConfig({
       },
       workbox: {
         // Tout est pré-caché : une partie se joue entièrement hors connexion.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest,woff2}'],
+        // Police : on ne précache que les sous-ensembles latins.
+        globIgnores: ['**/*vietnamese*'],
         navigateFallback: '/index.html',
       },
     }),
