@@ -1,0 +1,209 @@
+import { useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { colorFor, formatNumber, frenchSpacing } from '../lib/format'
+import { correctRanking } from '../game/scoring'
+import { isOver, standings } from '../game/engine'
+import type { Answer, GameState, NumberQuestion, Round } from '../game/types'
+
+/** Compteur animé jusqu'à la valeur cible. */
+function useCountUp(target: number, durationMs = 1100): number {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    let frame = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setValue(t === 1 ? target : target * eased)
+      if (t < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [target, durationMs])
+  return value
+}
+
+function BigAnswer({ question }: { question: NumberQuestion }) {
+  const v = useCountUp(question.answer)
+  const decimals = (String(question.answer).split('.')[1] ?? '').length
+  const shown = v === question.answer ? question.answer : Number(v.toFixed(decimals))
+  return (
+    <p className="big-answer">
+      {formatNumber(shown, question.year)} <small>{question.unit}</small>
+    </p>
+  )
+}
+
+/**
+ * Ligne graduée : la bonne réponse au centre.
+ * Échelle relative (0 → 2× la réponse) ou en écart absolu pour les années.
+ */
+function ScaleLine({ question, answers }: { question: NumberQuestion; answers: Answer[] }) {
+  const guesses = answers.map((a) => (a.kind === 'number' ? a.value : null))
+  const spread = Math.max(1, ...guesses.map((g) => (g === null ? 0 : Math.abs(g - question.answer)))) * 1.15
+  const position = (g: number) => {
+    const pos = question.year || question.answer <= 0 ? 0.5 + (g - question.answer) / (2 * spread) : g / question.answer / 2
+    return Math.min(1, Math.max(0, pos)) * 100
+  }
+  return (
+    <div className="scale" aria-hidden="true">
+      <div className="scale-track" />
+      <div className="scale-answer" />
+      {guesses.map((g, i) =>
+        g === null ? null : (
+          <span key={i} className="scale-marker" style={{ left: `${position(g)}%`, background: colorFor(i), animationDelay: `${0.9 + i * 0.12}s` }} />
+        ),
+      )}
+    </div>
+  )
+}
+
+function answerLabel(round: Round, answer: Answer): string {
+  if (answer.kind === 'number') {
+    if (answer.value === null) return '—'
+    return formatNumber(answer.value, round.kind !== 'ranking' && round.question.year)
+  }
+  if (answer.kind === 'higherlower') return answer.choice === null ? '—' : answer.choice === 'plus' ? '⬆︎ Plus' : '⬇︎ Moins'
+  return ''
+}
+
+function SourceLine({ round }: { round: Round }) {
+  const q = round.question
+  return (
+    <p className="source">
+      Source : {q.source}
+      {q.verified_at === null && ' · à vérifier'}
+      {q.perishable && ' · record susceptible d’évoluer'}
+    </p>
+  )
+}
+
+export function RevealScreen({ state, onNext }: { state: GameState; onNext: () => void }) {
+  const round = state.rounds[state.index]
+  const result = state.results[state.results.length - 1]
+  const { names } = state.config
+  const rows = names.map((name, i) => ({ name, i, answer: state.answers[i], points: result.points[i], note: result.notes[i] })).sort((a, b) => b.points - a.points || a.i - b.i)
+  const last = isOver(state)
+
+  return (
+    <main className="screen reveal">
+      <p className="question-compact">{frenchSpacing(round.question.prompt)}</p>
+
+      {(round.kind === 'classic' || round.kind === 'chrono') && (
+        <>
+          <BigAnswer question={round.question} />
+          <ScaleLine question={round.question} answers={state.answers} />
+        </>
+      )}
+
+      {round.kind === 'higherlower' && (
+        <>
+          <BigAnswer question={round.question} />
+          <p className="verdict">
+            C’était <strong>{round.question.answer > round.threshold ? 'PLUS' : 'MOINS'}</strong> que {formatNumber(round.threshold)} {round.question.unit}
+          </p>
+        </>
+      )}
+
+      {round.kind === 'ranking' && (
+        <ol className="ranking-solution">
+          {correctRanking(round.question.items.map((it) => it.value)).map((idx) => (
+            <li key={idx}>
+              <span>{round.question.items[idx].label}</span>
+              <span className="value">
+                {formatNumber(round.question.items[idx].value, round.question.unit === '')} {round.question.unit}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      <ul className="results">
+        {rows.map((r, k) => (
+          <li key={r.i} style={{ animationDelay: `${1.2 + k * 0.1}s` }}>
+            <span className="dot" style={{ background: colorFor(r.i) }} />
+            <span className="results-name">{r.name}</span>
+            <span className="results-answer">{answerLabel(round, r.answer)}</span>
+            <span className="results-note">{r.note}</span>
+            <span className={`results-points${r.points > 0 ? ' positive' : ''}`}>+{r.points}</span>
+          </li>
+        ))}
+      </ul>
+
+      <Scoreboard state={state} />
+      <SourceLine round={round} />
+
+      <div className="sticky-cta">
+        <button type="button" className="btn btn-primary" onClick={onNext}>
+          {last ? 'Voir le podium 🏆' : 'Question suivante'}
+        </button>
+      </div>
+    </main>
+  )
+}
+
+function Scoreboard({ state }: { state: GameState }) {
+  const target = state.config.end.type === 'target' ? state.config.end.points : null
+  const max = target ?? Math.max(1, ...state.scores)
+  return (
+    <div className="scoreboard">
+      <h3>Classement</h3>
+      {standings(state.scores).map((s) => (
+        <div key={s.index} className="scoreboard-row">
+          <span className="scoreboard-name">{state.config.names[s.index]}</span>
+          <div className="scoreboard-bar">
+            <div style={{ width: `${Math.min(100, (s.score / max) * 100)}%`, background: colorFor(s.index) }} />
+          </div>
+          <span className="scoreboard-score">{s.score}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function EndScreen({ state, onReplay, onHome }: { state: GameState; onReplay: () => void; onHome: () => void }) {
+  const ranking = standings(state.scores)
+  const podium = ranking.slice(0, 3)
+  const medals = ['🥇', '🥈', '🥉']
+  const winners = ranking.filter((r) => r.rank === 1).map((r) => state.config.names[r.index])
+
+  return (
+    <main className="screen end">
+      <p className="eyebrow">Fin de partie</p>
+      <h2 className="end-title">{winners.length > 1 ? 'Égalité !' : `${winners[0]} gagne !`}</h2>
+
+      <ol className="podium">
+        {podium.map((r, slot) => (
+          <li key={r.index} className={`podium-step slot-${slot + 1}`} style={{ '--team': colorFor(r.index) } as CSSProperties}>
+            <span className="podium-medal">{medals[r.rank - 1]}</span>
+            <span className="podium-name">{state.config.names[r.index]}</span>
+            <span className="podium-score">{r.score} pts</span>
+          </li>
+        ))}
+      </ol>
+
+      {ranking.length > 3 && (
+        <ul className="results">
+          {ranking.slice(podium.length).map((r) => (
+            <li key={r.index}>
+              <span className="dot" style={{ background: colorFor(r.index) }} />
+              <span className="results-name">
+                {r.rank}. {state.config.names[r.index]}
+              </span>
+              <span className="results-points">{r.score} pts</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="stack">
+        <button type="button" className="btn btn-primary" onClick={onReplay}>
+          Revanche !
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={onHome}>
+          Accueil
+        </button>
+      </div>
+    </main>
+  )
+}
