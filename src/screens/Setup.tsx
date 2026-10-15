@@ -9,7 +9,7 @@ import { User } from '@phosphor-icons/react/dist/csr/User'
 import { UsersThree } from '@phosphor-icons/react/dist/csr/UsersThree'
 import { X } from '@phosphor-icons/react/dist/csr/X'
 import { Ico, THEME_ICONS } from '../components/Icons'
-import { QUESTIONS } from '../data/questions'
+import { useQuestionBank } from '../data/bank'
 import { colorFor } from '../lib/format'
 import { THEMES } from '../game/types'
 import type { EndCondition, GameConfig, Theme } from '../game/types'
@@ -52,7 +52,8 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
   const [cfg, setCfg] = useState<GameConfig>(initial)
   const [step, setStep] = useState(0)
   const limits = LIMITS[cfg.mode]
-  const available = QUESTIONS.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
+  const questions = useQuestionBank()
+  const available = questions.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
   const needed = cfg.end.type === 'rounds' ? cfg.end.count : 14
 
   const chooseMode = (mode: GameConfig['mode']) => {

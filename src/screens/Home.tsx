@@ -1,7 +1,7 @@
 import { Question } from '@phosphor-icons/react/dist/csr/Question'
 import { Ico } from '../components/Icons'
 import { InstallHint } from '../components/InstallHint'
-import { QUESTIONS } from '../data/questions'
+import { bankSource, useQuestionBank } from '../data/bank'
 import { isAdmin } from '../lib/admin'
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
 }
 
 export function Home({ canResume, onNew, onResume, onHelp }: Props) {
+  const questions = useQuestionBank()
   return (
     <main className="screen home">
       <div className="home-hero">
@@ -42,8 +43,8 @@ export function Home({ canResume, onNew, onResume, onHelp }: Props) {
       </button>
 
       <p className="footnote">
-        {QUESTIONS.length} questions
-        {isAdmin() && ` · admin : ${QUESTIONS.filter((q) => q.verified_at).length} vérifiées`}
+        {questions.length} questions
+        {isAdmin() && ` · admin : ${questions.filter((q) => q.verified_at).length} vérifiées · source ${bankSource() === 'remote' ? 'Supabase' : 'embarquée'}`}
       </p>
     </main>
   )

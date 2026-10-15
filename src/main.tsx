@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { inject } from '@vercel/analytics'
 import '@fontsource-variable/bricolage-grotesque'
@@ -12,8 +12,18 @@ inject()
 // iOS n'autorise l'audio qu'après un premier geste de l'utilisateur.
 window.addEventListener('pointerdown', unlockAudio, { once: true })
 
+// Back-office : chargé à la demande sur /admin, jamais téléchargé par les joueurs.
+const AdminApp = lazy(() => import('./admin/AdminApp'))
+const isAdminRoute = window.location.pathname.startsWith('/admin')
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {isAdminRoute ? (
+      <Suspense fallback={null}>
+        <AdminApp />
+      </Suspense>
+    ) : (
+      <App />
+    )}
   </StrictMode>,
 )

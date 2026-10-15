@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from 'react'
-import { QUESTIONS } from './data/questions'
+import { getQuestions, syncQuestions } from './data/bank'
 import { buildDuels, buildRounds } from './game/deck'
 import { reducer, resumeState } from './game/engine'
 import type { Answer, GameConfig, GameState } from './game/types'
@@ -32,6 +32,20 @@ export default function App() {
     else remove(KEYS.game)
   }, [game])
 
+  // Questions à jour depuis Supabase : au lancement, puis à chaque retour au premier plan.
+  useEffect(() => {
+    void syncQuestions()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void syncQuestions()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('online', onVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', onVisible)
+    }
+  }, [])
+
   // Mesure d'usage (Vercel Web Analytics) : une partie menée jusqu'au podium.
   const ended = game?.phase === 'end'
   useEffect(() => {
@@ -45,9 +59,10 @@ export default function App() {
 
   const start = useCallback((config: GameConfig) => {
     save(KEYS.config, config)
-    const rounds = buildRounds(QUESTIONS, config, loadSeen())
+    const questions = getQuestions()
+    const rounds = buildRounds(questions, config, loadSeen())
     markSeen(rounds.map((r) => r.question.id))
-    dispatch({ type: 'start', config, rounds, duels: buildDuels(QUESTIONS, rounds) })
+    dispatch({ type: 'start', config, rounds, duels: buildDuels(questions, rounds) })
     track('game_start', { mode: config.mode, players: config.names.length, end: config.end.type === 'rounds' ? `${config.end.count}q` : `${config.end.points}pts` })
     setScreen('game')
   }, [])
