@@ -1,0 +1,1117 @@
+[
+ {
+  "id": "constructions-103",
+  "pack_id": "classique",
+  "theme": "constructions",
+  "type": "number",
+  "prompt": "Quelle était la hauteur d’origine de la pyramide de Khéops, la plus grande d’Égypte ?",
+  "unit": "m",
+  "answer": 146,
+  "items": null,
+  "year": false,
+  "subject": "kheops",
+  "source": "Wikipédia : Pyramide de Khéops",
+  "source_url": "https://fr.wikipedia.org/wiki/Pyramide_de_Khéops",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "constructions-104",
+  "pack_id": "classique",
+  "theme": "constructions",
+  "type": "number",
+  "prompt": "Quelle est la hauteur du viaduc de Millau, le pont à la structure la plus haute du monde ?",
+  "unit": "m",
+  "answer": 343,
+  "items": null,
+  "year": false,
+  "subject": "viaduc-millau",
+  "source": "Compagnie Eiffage du Viaduc de Millau",
+  "source_url": "https://fr.wikipedia.org/wiki/Viaduc_de_Millau",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "constructions-105",
+  "pack_id": "classique",
+  "theme": "constructions",
+  "type": "number",
+  "prompt": "Quelle est la superficie de l'aéroport international du roi Fahd, le plus grand aéroport du monde ?",
+  "unit": "km²",
+  "answer": 780,
+  "items": null,
+  "year": false,
+  "subject": "aeroport-roi-fahd",
+  "source": "Guinness World Records",
+  "source_url": "https://www.guinnessworldrecords.com/world-records/100257-largest-airport-area",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "review",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "À RELIRE — Valeur alignée sur la source citée : Guinness indique 780 km² (776 km² dans d'autres sources). 776 → 780."
+ },
+ {
+  "id": "constructions-107",
+  "pack_id": "classique",
+  "theme": "constructions",
+  "type": "number",
+  "prompt": "En 2026, quelle est la hauteur d’Ain Dubai, la plus grande grande roue du monde ?",
+  "unit": "m",
+  "answer": 250,
+  "items": null,
+  "year": false,
+  "subject": "ain-dubai",
+  "source": "Guinness World Records",
+  "source_url": "https://www.euronews.com/travel/2021/10/15/the-worlds-largest-observation-wheel-opens-to-the-public-on-october-21st",
+  "perishable": true,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "Valeur 250 m confirmée (Guinness 2021, toujours la plus grande en 2026). Énoncé daté « En 2026 » car perishable."
+ },
+ {
+  "id": "constructions-109",
+  "pack_id": "classique",
+  "theme": "constructions",
+  "type": "number",
+  "prompt": "Combien de marches compte l'escalier de la Niesenbahn (Suisse), le plus long escalier du monde ?",
+  "unit": "marches",
+  "answer": 11674,
+  "items": null,
+  "year": false,
+  "subject": "niesen-escalier",
+  "source": "Guinness World Records",
+  "source_url": "https://www.guinnessworldrecords.com/world-records/68979-longest-stairway",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-111",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Combien de minutes a duré la guerre anglo-zanzibarite, la plus courte guerre de l’histoire ?",
+  "unit": "minutes",
+  "answer": 38,
+  "items": null,
+  "year": false,
+  "subject": "guerre-anglo-zanzibarite",
+  "source": "Wikipédia : Guerre anglo-zanzibarite",
+  "source_url": "https://fr.wikipedia.org/wiki/Guerre_anglo-zanzibarite",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-112",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Combien d’années a duré la guerre de Cent Ans, l’un des plus longs conflits de l’histoire européenne ?",
+  "unit": "ans",
+  "answer": 116,
+  "items": null,
+  "year": false,
+  "subject": "guerre-cent-ans",
+  "source": "Wikipédia : Guerre de Cent Ans",
+  "source_url": "https://fr.wikipedia.org/wiki/Guerre_de_Cent_Ans",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "Valeur 116 ans (1337-1453) confirmée. Énoncé sans superlatif : ajout de « l’un des plus longs conflits de l’histoire européenne »."
+ },
+ {
+  "id": "histoire-113",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Quelle était la superficie de l'Empire britannique à son apogée, le plus grand empire de l'histoire ?",
+  "unit": "millions de km²",
+  "answer": 35.5,
+  "items": null,
+  "year": false,
+  "subject": "empire-britannique",
+  "source": "Wikipédia : Empire britannique",
+  "source_url": "https://fr.wikipedia.org/wiki/Empire_britannique",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-114",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "En quelle année a été fondée l'université Al Quaraouiyine, la plus ancienne université encore en activité ?",
+  "unit": "",
+  "answer": 859,
+  "items": null,
+  "year": true,
+  "subject": "al-quaraouiyine",
+  "source": "UNESCO / Guinness World Records",
+  "source_url": "https://fr.wikipedia.org/wiki/Université_Al_Quaraouiyine",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-115",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Combien de jours a duré la présidence de William Harrison, la plus courte des États-Unis ?",
+  "unit": "jours",
+  "answer": 31,
+  "items": null,
+  "year": false,
+  "subject": "william-harrison",
+  "source": "Maison-Blanche",
+  "source_url": "https://fr.wikipedia.org/wiki/William_Henry_Harrison",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-116",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Combien d’années a duré la construction de Notre-Dame de Paris, l’un des plus longs chantiers de cathédrale gothique ?",
+  "unit": "ans",
+  "answer": 182,
+  "items": null,
+  "year": false,
+  "subject": "notre-dame-paris",
+  "source": "Wikipédia : Cathédrale Notre-Dame de Paris",
+  "source_url": "https://fr.wikipedia.org/wiki/Cathédrale_Notre-Dame_de_Paris",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "Valeur 182 ans (1163-1345) confirmée. Énoncé sans superlatif : ajout de « l’un des plus longs chantiers de cathédrale gothique »."
+ },
+ {
+  "id": "histoire-117",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Combien mesurait le Titanic, le plus grand paquebot de son époque ?",
+  "unit": "m",
+  "answer": 269,
+  "items": null,
+  "year": false,
+  "subject": "titanic",
+  "source": "Wikipédia : Titanic",
+  "source_url": "https://fr.wikipedia.org/wiki/Titanic",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-118",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Combien d'épouses a eues Henri VIII, le roi d'Angleterre le plus marié ?",
+  "unit": "épouses",
+  "answer": 6,
+  "items": null,
+  "year": false,
+  "subject": "henri-viii",
+  "source": "Wikipédia : Henri VIII",
+  "source_url": "https://fr.wikipedia.org/wiki/Henri_VIII",
+  "perishable": false,
+  "difficulty": 1,
+  "status": "review",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "À RELIRE — Valeur 6 exacte, mais petit entier (≤ 12) connu de beaucoup : contraire à la règle « vraie estimation ». Alternative : durée de son règne (38 ans, 1509-1547) ou retirer la question."
+ },
+ {
+  "id": "histoire-119",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Combien de minutes aurait duré le « règne » de Louis XIX, le plus court de l’histoire de France ?",
+  "unit": "minutes",
+  "answer": 20,
+  "items": null,
+  "year": false,
+  "subject": "louis-xix",
+  "source": "Wikipédia : Louis-Antoine d’Artois",
+  "source_url": "https://www.guinnessworldrecords.com/world-records/shortest-reign-of-a-monarch/",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-120",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "Combien d'années a régné Élisabeth II, le plus long règne de l'histoire britannique ?",
+  "unit": "ans",
+  "answer": 70,
+  "items": null,
+  "year": false,
+  "subject": "elisabeth-ii",
+  "source": "Wikipédia : Élisabeth II",
+  "source_url": "https://fr.wikipedia.org/wiki/Élisabeth_II",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-121",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "number",
+  "prompt": "En quelle année a été inaugurée la tour Eiffel, alors le plus haut monument du monde ?",
+  "unit": "",
+  "answer": 1889,
+  "items": null,
+  "year": true,
+  "subject": "tour-eiffel",
+  "source": "SETE",
+  "source_url": "https://fr.wikipedia.org/wiki/Tour_Eiffel",
+  "perishable": false,
+  "difficulty": 1,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-124",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "En 2026, combien de hot-dogs compte le record du monde en 10 minutes, détenu par Joey Chestnut ?",
+  "unit": "hot-dogs",
+  "answer": 76,
+  "items": null,
+  "year": false,
+  "subject": "joey-chestnut",
+  "source": "Major League Eating",
+  "source_url": "https://www.fox5ny.com/news/joey-chestnut-wins-18th-nathans-hot-dog-eating-contest-sudo-takes-12th",
+  "perishable": true,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "Record de 76 (2021) toujours en vigueur en 2026 (Chestnut a gagné 2026 avec 66). Énoncé daté « En 2026 » car perishable."
+ },
+ {
+  "id": "insolite-125",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien mesurait la plus longue moustache du monde (Ram Singh Chauhan) ?",
+  "unit": "m",
+  "answer": 4.29,
+  "items": null,
+  "year": false,
+  "subject": "moustache",
+  "source": "Guinness World Records",
+  "source_url": "https://en.wikipedia.org/wiki/Moustache",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-126",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien de lettres compte « anticonstitutionnellement », longtemps considéré comme le plus long mot de la langue française ?",
+  "unit": "lettres",
+  "answer": 25,
+  "items": null,
+  "year": false,
+  "subject": "anticonstitutionnellement",
+  "source": "Dictionnaire de l’Académie française",
+  "source_url": "https://fr.wikipedia.org/wiki/Anticonstitutionnellement",
+  "perishable": false,
+  "difficulty": 1,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-127",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien de langues parle-t-on en Papouasie-Nouvelle-Guinée, le pays qui en compte le plus ?",
+  "unit": "langues",
+  "answer": 840,
+  "items": null,
+  "year": false,
+  "subject": "langues-png",
+  "source": "Ethnologue",
+  "source_url": "https://www.guinnessworldrecords.com/world-records/67315-country-with-most-languages",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-128",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "À combien d'exemplaires a été diffusée la Bible, le livre le plus vendu de l'histoire ?",
+  "unit": "milliards d'exemplaires",
+  "answer": 5,
+  "items": null,
+  "year": false,
+  "subject": "bible",
+  "source": "Guinness World Records",
+  "source_url": "https://www.guinnessworldrecords.com/world-records/best-selling-book-of-non-fiction",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-130",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien a été vendu « Salvator Mundi », le tableau le plus cher de l’histoire ?",
+  "unit": "millions $",
+  "answer": 450,
+  "items": null,
+  "year": false,
+  "subject": "salvator-mundi",
+  "source": "Christie's (2017)",
+  "source_url": "https://fr.wikipedia.org/wiki/Salvator_Mundi_(Léonard_de_Vinci)",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-131",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien pesait le Cullinan, le plus gros diamant brut jamais découvert ?",
+  "unit": "carats",
+  "answer": 3106,
+  "items": null,
+  "year": false,
+  "subject": "cullinan",
+  "source": "Wikipédia : Cullinan",
+  "source_url": "https://fr.wikipedia.org/wiki/Cullinan_(diamant)",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-133",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien d’heures a duré le plus long baiser du monde (Thaïlande, 2013) ?",
+  "unit": "heures",
+  "answer": 58,
+  "items": null,
+  "year": false,
+  "subject": "plus-long-baiser",
+  "source": "Guinness World Records",
+  "source_url": "https://www.foxnews.com/world/thai-couple-sets-new-record-for-longest-kiss.amp",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-135",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien mesurait le plus grand bonhomme de neige du monde (Olympia, Maine, 2008) ?",
+  "unit": "m",
+  "answer": 37,
+  "items": null,
+  "year": false,
+  "subject": "bonhomme-de-neige",
+  "source": "Guinness World Records",
+  "source_url": "https://www.guinnessworldrecords.com/world-records/tallest-snowman",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-136",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien de coups a duré la plus longue partie d’échecs de tournoi (Nikolić–Arsović, 1989) ?",
+  "unit": "coups",
+  "answer": 269,
+  "items": null,
+  "year": false,
+  "subject": "partie-echecs",
+  "source": "FIDE / Chessgames",
+  "source_url": "https://en.wikipedia.org/wiki/Longest_game_of_chess",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "insolite-138",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "En 2026, quelle est la hauteur approximative d'Hyperion, le plus grand arbre vivant du monde ?",
+  "unit": "m",
+  "answer": 116,
+  "items": null,
+  "year": false,
+  "subject": "hyperion",
+  "source": "Wikipédia : Hyperion (arbre)",
+  "source_url": "https://www.mentalfloss.com/science/ecology/hyperion-worlds-tallest-tree",
+  "perishable": true,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "Valeur ~116 m confirmée (115,55 m en 2006, ~116 m en 2019). Énoncé daté « En 2026 » et « approximative » car perishable et mesures variables."
+ },
+ {
+  "id": "insolite-139",
+  "pack_id": "classique",
+  "theme": "insolite",
+  "type": "number",
+  "prompt": "Combien de dominos ont été renversés lors du record du Domino Day 2009 ?",
+  "unit": "millions",
+  "answer": 4.49,
+  "items": null,
+  "year": false,
+  "subject": "domino-day",
+  "source": "Guinness World Records",
+  "source_url": "https://www.guinnessworldrecords.com/world-records/most-dominoes-toppled-by-a-group",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "geo-140",
+  "pack_id": "classique",
+  "theme": "geo",
+  "type": "ranking",
+  "prompt": "Classe ces océans du plus petit au plus grand",
+  "unit": "millions de km²",
+  "answer": null,
+  "items": [
+   {
+    "label": "Arctique",
+    "value": 15.56
+   },
+   {
+    "label": "Austral",
+    "value": 21.96
+   },
+   {
+    "label": "Indien",
+    "value": 70.56
+   },
+   {
+    "label": "Atlantique",
+    "value": 85.13
+   }
+  ],
+  "year": false,
+  "subject": "oceans",
+  "source": "Wikipédia",
+  "source_url": "https://en.wikipedia.org/wiki/Ocean",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "review",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "À RELIRE — Valeurs harmonisées sur une même source (Wikipédia, table « Oceans by size ») : Arctique 14 → 15,56 ; Atlantique 106,46 (avec mers marginales) → 85,13. Ordre inchangé."
+ },
+ {
+  "id": "espace-141",
+  "pack_id": "classique",
+  "theme": "espace",
+  "type": "ranking",
+  "prompt": "Classe ces planètes de la plus petite à la plus grande",
+  "unit": "km de diamètre",
+  "answer": null,
+  "items": [
+   {
+    "label": "Mercure",
+    "value": 4879
+   },
+   {
+    "label": "Mars",
+    "value": 6779
+   },
+   {
+    "label": "Terre",
+    "value": 12742
+   },
+   {
+    "label": "Neptune",
+    "value": 49244
+   }
+  ],
+  "year": false,
+  "subject": "planetes-diametre",
+  "source": "NASA",
+  "source_url": "https://science.nasa.gov/solar-system/planets/",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "constructions-142",
+  "pack_id": "classique",
+  "theme": "constructions",
+  "type": "ranking",
+  "prompt": "Classe ces monuments du plus petit au plus haut",
+  "unit": "m",
+  "answer": null,
+  "items": [
+   {
+    "label": "Statue de la Liberté",
+    "value": 93
+   },
+   {
+    "label": "Big Ben",
+    "value": 96
+   },
+   {
+    "label": "Tour Eiffel",
+    "value": 330
+   },
+   {
+    "label": "Burj Khalifa",
+    "value": 828
+   }
+  ],
+  "year": false,
+  "subject": "monuments-hauteur",
+  "source": "Sites officiels",
+  "source_url": "https://fr.wikipedia.org/wiki/Tour_Eiffel",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "animaux-143",
+  "pack_id": "classique",
+  "theme": "animaux",
+  "type": "ranking",
+  "prompt": "Classe ces animaux du plus léger au plus lourd",
+  "unit": "kg",
+  "answer": null,
+  "items": [
+   {
+    "label": "Autruche",
+    "value": 130
+   },
+   {
+    "label": "Ours polaire",
+    "value": 450
+   },
+   {
+    "label": "Girafe",
+    "value": 1200
+   },
+   {
+    "label": "Hippopotame",
+    "value": 1500
+   }
+  ],
+  "year": false,
+  "subject": "animaux-poids",
+  "source": "Wikipédia",
+  "source_url": "https://fr.wikipedia.org/wiki/Hippopotame_amphibie",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "geo-144",
+  "pack_id": "classique",
+  "theme": "geo",
+  "type": "ranking",
+  "prompt": "Classe ces fleuves du plus court au plus long",
+  "unit": "km",
+  "answer": null,
+  "items": [
+   {
+    "label": "Seine",
+    "value": 777
+   },
+   {
+    "label": "Loire",
+    "value": 1006
+   },
+   {
+    "label": "Danube",
+    "value": 2850
+   },
+   {
+    "label": "Nil",
+    "value": 6650
+   }
+  ],
+  "year": false,
+  "subject": "fleuves-longueur",
+  "source": "Wikipédia",
+  "source_url": "https://fr.wikipedia.org/wiki/Liste_des_plus_longs_cours_d'eau",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "geo-145",
+  "pack_id": "classique",
+  "theme": "geo",
+  "type": "ranking",
+  "prompt": "Classe ces pays du plus petit au plus grand",
+  "unit": "milliers de km²",
+  "answer": null,
+  "items": [
+   {
+    "label": "Italie",
+    "value": 302
+   },
+   {
+    "label": "Allemagne",
+    "value": 358
+   },
+   {
+    "label": "Espagne",
+    "value": 506
+   },
+   {
+    "label": "France métropolitaine",
+    "value": 552
+   }
+  ],
+  "year": false,
+  "subject": "pays-superficie",
+  "source": "Wikipédia",
+  "source_url": "https://fr.wikipedia.org/wiki/Liste_des_pays_par_superficie",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "Valeurs > 100 000 converties en milliers de km² (règle du format) : 302 073 → 302 ; 357 592 → 358 ; 505 990 → 506 ; 551 695 → 552. Ordre inchangé."
+ },
+ {
+  "id": "geo-147",
+  "pack_id": "classique",
+  "theme": "geo",
+  "type": "ranking",
+  "prompt": "Classe ces sommets du plus bas au plus haut",
+  "unit": "m",
+  "answer": null,
+  "items": [
+   {
+    "label": "Mont Blanc",
+    "value": 4807
+   },
+   {
+    "label": "Kilimandjaro",
+    "value": 5895
+   },
+   {
+    "label": "Aconcagua",
+    "value": 6961
+   },
+   {
+    "label": "K2",
+    "value": 8611
+   }
+  ],
+  "year": false,
+  "subject": "sommets-altitude",
+  "source": "Wikipédia / géomètres-experts de Haute-Savoie (2023)",
+  "source_url": "https://www.linfodurable.fr/le-mont-blanc-mesure-480559-metres-222-m-de-moins-quen-2021-41483",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "Mont Blanc aligné sur la question chiffrée (relevé 2026 : 4 807 m) ; ordre inchangé."
+ },
+ {
+  "id": "animaux-148",
+  "pack_id": "classique",
+  "theme": "animaux",
+  "type": "ranking",
+  "prompt": "Classe du plus lent au plus rapide (vitesse de pointe)",
+  "unit": "km/h",
+  "answer": null,
+  "items": [
+   {
+    "label": "Usain Bolt",
+    "value": 44.7
+   },
+   {
+    "label": "Chat domestique",
+    "value": 48
+   },
+   {
+    "label": "Lévrier",
+    "value": 70
+   },
+   {
+    "label": "Guépard",
+    "value": 110
+   }
+  ],
+  "year": false,
+  "subject": "vitesse-pointe",
+  "source": "Wikipédia",
+  "source_url": "https://fr.wikipedia.org/wiki/Guépard",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-149",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "ranking",
+  "prompt": "Classe ces inventions de la plus ancienne à la plus récente",
+  "unit": "",
+  "answer": null,
+  "items": [
+   {
+    "label": "Imprimerie (Gutenberg)",
+    "value": 1450
+   },
+   {
+    "label": "Téléphone",
+    "value": 1876
+   },
+   {
+    "label": "Avion (Wright)",
+    "value": 1903
+   },
+   {
+    "label": "Internet (ARPANET)",
+    "value": 1969
+   }
+  ],
+  "year": false,
+  "subject": "inventions",
+  "source": "Wikipédia",
+  "source_url": "https://fr.wikipedia.org/wiki/Advanced_Research_Projects_Agency_Network",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "geo-150",
+  "pack_id": "classique",
+  "theme": "geo",
+  "type": "ranking",
+  "prompt": "Classe ces lacs du moins profond au plus profond",
+  "unit": "m",
+  "answer": null,
+  "items": [
+   {
+    "label": "Titicaca",
+    "value": 281
+   },
+   {
+    "label": "Léman",
+    "value": 310
+   },
+   {
+    "label": "Tanganyika",
+    "value": 1470
+   },
+   {
+    "label": "Baïkal",
+    "value": 1642
+   }
+  ],
+  "year": false,
+  "subject": "lacs-profondeur",
+  "source": "Wikipédia",
+  "source_url": "https://fr.wikipedia.org/wiki/Lac_Baïkal",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "geo-151",
+  "pack_id": "classique",
+  "theme": "geo",
+  "type": "ranking",
+  "prompt": "Classe ces déserts du plus petit au plus grand",
+  "unit": "millions de km²",
+  "answer": null,
+  "items": [
+   {
+    "label": "Kalahari",
+    "value": 0.9
+   },
+   {
+    "label": "Gobi",
+    "value": 1.3
+   },
+   {
+    "label": "Désert d'Arabie",
+    "value": 2.33
+   },
+   {
+    "label": "Sahara",
+    "value": 9.2
+   }
+  ],
+  "year": false,
+  "subject": "deserts-superficie",
+  "source": "Wikipédia",
+  "source_url": "https://en.wikipedia.org/wiki/List_of_deserts_by_area",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": "Valeurs confirmées mais > 100 000 : converties en millions de km² (900 000 → 0,9 ; 1 295 000 → 1,3 ; 2 330 000 → 2,33 ; 9 200 000 → 9,2). Ordre inchangé."
+ },
+ {
+  "id": "constructions-152",
+  "pack_id": "classique",
+  "theme": "constructions",
+  "type": "ranking",
+  "prompt": "Classe ces tours de la plus petite à la plus haute",
+  "unit": "m",
+  "answer": null,
+  "items": [
+   {
+    "label": "One World Trade Center",
+    "value": 541
+   },
+   {
+    "label": "Shanghai Tower",
+    "value": 632
+   },
+   {
+    "label": "Tokyo Skytree",
+    "value": 634
+   },
+   {
+    "label": "Burj Khalifa",
+    "value": 828
+   }
+  ],
+  "year": false,
+  "subject": "tours-hauteur",
+  "source": "CTBUH",
+  "source_url": "https://en.wikipedia.org/wiki/List_of_tallest_structures",
+  "perishable": false,
+  "difficulty": 3,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "animaux-153",
+  "pack_id": "classique",
+  "theme": "animaux",
+  "type": "ranking",
+  "prompt": "Classe ces animaux de la plus courte à la plus longue espérance de vie",
+  "unit": "ans",
+  "answer": null,
+  "items": [
+   {
+    "label": "Hamster",
+    "value": 2.5
+   },
+   {
+    "label": "Chat",
+    "value": 15
+   },
+   {
+    "label": "Éléphant",
+    "value": 65
+   },
+   {
+    "label": "Tortue géante",
+    "value": 150
+   }
+  ],
+  "year": false,
+  "subject": "esperance-vie",
+  "source": "Wikipédia",
+  "source_url": "https://fr.wikipedia.org/wiki/Tortue_géante_des_Seychelles",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "sport-155",
+  "pack_id": "classique",
+  "theme": "sport",
+  "type": "ranking",
+  "prompt": "Classe ces balles de la plus petite à la plus grande",
+  "unit": "cm de diamètre",
+  "answer": null,
+  "items": [
+   {
+    "label": "Balle de golf",
+    "value": 4.27
+   },
+   {
+    "label": "Balle de tennis",
+    "value": 6.7
+   },
+   {
+    "label": "Boule de pétanque",
+    "value": 7.5
+   },
+   {
+    "label": "Ballon de basket",
+    "value": 24
+   }
+  ],
+  "year": false,
+  "subject": "balles-diametre",
+  "source": "Règlements officiels",
+  "source_url": "https://fr.wikipedia.org/wiki/Balle_de_golf",
+  "perishable": false,
+  "difficulty": 2,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ },
+ {
+  "id": "histoire-156",
+  "pack_id": "classique",
+  "theme": "histoire",
+  "type": "ranking",
+  "prompt": "Classe ces événements du plus ancien au plus récent",
+  "unit": "",
+  "answer": null,
+  "items": [
+   {
+    "label": "Prise de la Bastille",
+    "value": 1789
+   },
+   {
+    "label": "Bataille de Waterloo",
+    "value": 1815
+   },
+   {
+    "label": "Commune de Paris",
+    "value": 1871
+   },
+   {
+    "label": "Première Guerre mondiale",
+    "value": 1914
+   }
+  ],
+  "year": false,
+  "subject": "evenements-histoire",
+  "source": "Wikipédia",
+  "source_url": "https://fr.wikipedia.org/wiki/Commune_de_Paris",
+  "perishable": false,
+  "difficulty": 1,
+  "status": "published",
+  "verified_at": "2026-10-15",
+  "review_due_at": null,
+  "notes": ""
+ }
+]
