@@ -7,7 +7,7 @@ import type { Answer, Breakdown, Round, RoundResult, Tier } from './types'
  *  - égalité parfaite pour ce point → duel de rapidité ;
  *  - à partir de 3 participants, une réponse « Hors Norme » (plus du double ou moins
  *    de la moitié de la vraie valeur) coûte 1 point ;
- *  - la dernière question compte double.
+ *  - la dernière question compte double (gains seulement, le malus reste à −1).
  */
 
 export const PRECISION_TIERS: { maxError: number; points: number; tier: Tier }[] = [
@@ -55,7 +55,8 @@ export function precisionFor(error: number, year = false): { points: number; tie
   return { points: 0, tier: 'far' }
 }
 
-const total = (b: Breakdown, multiplier: number) => (b.precision + b.win + b.malus) * multiplier
+/** Seuls les gains sont multipliés : la dernière question reste une chance de revenir, pas un piège. */
+const total = (b: Breakdown, multiplier: number) => (b.precision + b.win) * multiplier + b.malus
 
 function finalize(
   breakdown: Breakdown[],

@@ -96,7 +96,7 @@ function PointChips({ breakdown, multiplier, pendingDuel, bonusRound }: { breakd
   if (breakdown.win > 0) chips.push({ label: `Plus proche +${breakdown.win}`, tone: 'good' })
   if (breakdown.malus < 0) chips.push({ label: `Hors Norme −${Math.abs(breakdown.malus)}`, tone: 'bad' })
   if (pendingDuel) chips.push({ label: 'Duel pour le point de manche', tone: 'neutral' })
-  if (multiplier > 1 && (breakdown.precision || breakdown.win || breakdown.malus)) chips.push({ label: `×${multiplier}`, tone: 'neutral' })
+  if (multiplier > 1 && (breakdown.precision || breakdown.win)) chips.push({ label: `×${multiplier}`, tone: 'neutral' })
   if (chips.length === 0) return null
   return (
     <span className="chips-inline">

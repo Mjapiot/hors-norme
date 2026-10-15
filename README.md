@@ -32,7 +32,7 @@ Pour tester sur un iPhone du même réseau Wi-Fi : `npm run dev -- --host`, puis
 
 **Manches bonus** (toutes les 4 questions) : Classement express (3 pts si parfait, 1 si 2 bien placés), Plus ou moins (1 pt si juste).
 
-**Dernière question** (mode 5 ou 10 questions) : points doublés.
+**Dernière question** (mode 5 ou 10 questions) : gains doublés (le malus reste à −1).
 
 **Fin de partie** : 5 ou 10 questions, ou objectif 8 / 12 / 15 pts (leader unique requis). Objectifs calibrés par simulation :
 le leader marque ≈ 1,2 pt/manche, soit ≈ 8, 11 et 14 manches en médiane.

@@ -93,8 +93,8 @@ describe('scoring — précision + gagnant de manche', () => {
     expect(r.labels[0]).toContain('2 ans')
   })
 
-  it('points doublés sur demande', () => {
-    expect(scoreNumber([100, 250, 30], 100, false, { multiplier: 2 }).points).toEqual([8, -2, -2])
+  it('points doublés : gains x2, malus inchangé', () => {
+    expect(scoreNumber([100, 250, 30], 100, false, { multiplier: 2 }).points).toEqual([8, -1, -1])
   })
 })
 

@@ -43,7 +43,7 @@ export function Home({ canResume, onNew, onResume }: Props) {
           </li>
           <li>Le plus proche gagne +1 (s’il a marqué). Égalité parfaite : duel de rapidité.</li>
           <li>À partir de 3 équipes, une réponse « Hors Norme » (plus du double ou moins de la moitié) coûte 1 point.</li>
-          <li>Une manche bonus toutes les 4 questions, et la dernière question compte double.</li>
+          <li>Une manche bonus toutes les 4 questions, et la dernière question compte double (sauf le malus).</li>
         </ol>
       </details>
 
