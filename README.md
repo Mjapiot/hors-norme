@@ -16,15 +16,26 @@ Pour tester sur un iPhone du même réseau Wi-Fi : `npm run dev -- --host`, puis
 
 ## Règles du jeu
 
-| Manche | Principe | Points |
-| --- | --- | --- |
-| Question | Chacun tape un chiffre en secret | 1er 3 pts · 2e 2 pts · 3e 1 pt (le dernier ne marque jamais) · +1 si à moins de 5 % · +3 si tout pile |
-| ⚡ Chrono 30 s | Pareil, mais 30 s par équipe (la saisie en cours est validée à la fin) | idem |
-| 📊 Classement express | Ordonner 4 éléments | 1 pt par bonne position, +2 si parfait |
-| ↕️ Plus ou moins | Au-dessus ou en dessous d'un seuil | 2 pts si juste |
+**Questions chiffrées** (classique et Chrono 30 s) — chacun marque selon *sa* précision :
 
-Une manche bonus toutes les 4 questions. Fin de partie : 5 ou 10 questions, ou 10/15/20 points (leader unique requis).
-Pour les questions « en quelle année », l'écart se juge en années (bonus à ±5 ans).
+| Écart avec la bonne réponse | Points |
+| --- | --- |
+| Tout pile | 3 |
+| moins de 5 % | 2 |
+| moins de 20 % | 1 |
+| au-delà | 0 |
+
+- **Plus proche +1**, seulement s'il a marqué (deux équipes trop loin → 0 pour tout le monde).
+- **Égalité parfaite** pour ce point → **duel de rapidité** (plus ou moins, sur l'écran partagé ; une erreur élimine).
+- **Malus « Hors Norme » −1** à partir de 3 participants : réponse plus du double ou moins de la moitié de la vraie valeur. Les scores ne descendent jamais sous 0.
+- Années : paliers à 0 / 5 / 20 ans d'écart.
+
+**Manches bonus** (toutes les 4 questions) : Classement express (3 pts si parfait, 1 si 2 bien placés), Plus ou moins (1 pt si juste).
+
+**Dernière question** (mode 5 ou 10 questions) : points doublés.
+
+**Fin de partie** : 5 ou 10 questions, ou objectif 8 / 12 / 15 pts (leader unique requis). Objectifs calibrés par simulation :
+le leader marque ≈ 1,2 pt/manche, soit ≈ 8, 11 et 14 manches en médiane.
 
 ## Structure
 
@@ -33,7 +44,7 @@ src/
   game/        cœur du jeu, pur et testé : types, scoring, deck (tirage), engine (machine d'état)
   data/        questions.ts — 157 questions de départ (toutes verified_at = null)
   screens/     Accueil, Configuration, Question / Passe-téléphone / Saisie, Révélation / Podium
-  components/  NumPad, Timer, InstallHint
+  components/  NumPad, Timer, InstallHint, Icons (Phosphor, MIT)
   lib/         stockage local, formatage français
 ```
 

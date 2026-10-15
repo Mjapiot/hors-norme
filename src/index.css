@@ -848,7 +848,8 @@ p {
   grid-template-columns: auto 1fr auto;
   grid-template-areas:
     'dot name points'
-    'dot meta points';
+    'dot meta points'
+    'dot chips points';
   align-items: center;
   column-gap: 12px;
   padding: 12px 14px;
@@ -901,6 +902,10 @@ p {
 
 .results-points.positive {
   color: var(--good);
+}
+
+.results-points.negative {
+  color: var(--bad);
 }
 
 .scoreboard {
@@ -1077,4 +1082,197 @@ p {
   grid-template-columns: 1fr 1.15fr;
   width: 75%;
   margin-inline: auto;
+}
+
+/* ───────── Icônes & détail des points ───────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.badge,
+.theme,
+.chip,
+.progress,
+.eyebrow-icon,
+.help-icon,
+.results-note,
+.btn-icon,
+.btn-hl,
+.btn.small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-icon,
+.btn.small {
+  display: flex;
+}
+
+.theme,
+.badge,
+.results-note,
+.progress {
+  justify-content: flex-start;
+}
+
+.key {
+  display: grid;
+  place-items: center;
+}
+
+.help-icon {
+  align-self: center;
+}
+
+.double-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.reveal .double-banner {
+  margin: 0;
+}
+
+.chips-inline {
+  grid-area: chips;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.pt-chip {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.pt-good {
+  background: color-mix(in srgb, var(--good) 18%, transparent);
+  color: var(--good);
+}
+
+.pt-bad {
+  background: color-mix(in srgb, var(--bad) 18%, transparent);
+  color: var(--bad);
+}
+
+.tier-exact .results-note,
+.tier-perfect .results-note,
+.tier-close .results-note {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.tier-absurd .results-note,
+.tier-bad .results-note {
+  color: var(--bad);
+}
+
+.podium-medal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--team);
+}
+
+.podium-rank {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+}
+
+/* ───────── Duel de rapidité ───────── */
+
+.duel {
+  gap: 16px;
+  text-align: center;
+}
+
+.duel .eyebrow-icon {
+  align-self: center;
+  color: var(--pink);
+}
+
+.duel-prompt {
+  font-size: clamp(20px, 6vw, 26px);
+}
+
+.duel-countdown {
+  font-size: 96px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  animation: pop 0.3s ease-out;
+}
+
+.duel-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.duel-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 3px solid var(--team);
+  background: color-mix(in srgb, var(--team) 10%, var(--surface));
+  transition: opacity 0.2s;
+}
+
+.duel-row.out {
+  opacity: 0.35;
+}
+
+.duel-row.won {
+  box-shadow: 0 0 0 4px var(--accent), 0 0 30px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.duel-name {
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--team);
+}
+
+.duel-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.duel-buttons .btn-hl {
+  min-height: 72px;
+  font-size: 22px;
 }

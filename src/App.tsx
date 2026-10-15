@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import { QUESTIONS } from './data/questions'
-import { buildRounds } from './game/deck'
+import { buildDuels, buildRounds } from './game/deck'
 import { reducer, resumeState } from './game/engine'
 import type { Answer, GameConfig, GameState } from './game/types'
 import { KEYS, load, loadSeen, markSeen, remove, save } from './lib/storage'
 import { Home } from './screens/Home'
 import { DEFAULT_CONFIG, Setup } from './screens/Setup'
-import { GameHeader, HandoffScreen, InputScreen, QuestionScreen } from './screens/GameScreens'
+import { DuelScreen, GameHeader, HandoffScreen, InputScreen, QuestionScreen } from './screens/GameScreens'
 import { EndScreen, RevealScreen } from './screens/Reveal'
 
 type Screen = 'home' | 'setup' | 'game'
@@ -30,7 +30,7 @@ export default function App() {
     save(KEYS.config, config)
     const rounds = buildRounds(QUESTIONS, config, loadSeen())
     markSeen(rounds.map((r) => r.question.id))
-    dispatch({ type: 'start', config, rounds })
+    dispatch({ type: 'start', config, rounds, duels: buildDuels(QUESTIONS, rounds) })
     setScreen('game')
   }, [])
 
@@ -55,11 +55,12 @@ export default function App() {
 
   return (
     <div className="game">
-      {game.phase !== 'handoff' && game.phase !== 'input' && <GameHeader state={game} onQuit={goHome} />}
+      {game.phase !== 'handoff' && game.phase !== 'input' && game.phase !== 'duel' && <GameHeader state={game} onQuit={goHome} />}
       {game.phase === 'question' && <QuestionScreen state={game} onGo={() => dispatch({ type: 'beginAnswers' })} />}
       {game.phase === 'handoff' && <HandoffScreen state={game} onReady={() => dispatch({ type: 'ready' })} />}
       {game.phase === 'input' && <InputScreen state={game} onSubmit={submit} />}
-      {game.phase === 'reveal' && <RevealScreen state={game} onNext={() => dispatch({ type: 'next' })} />}
+      {game.phase === 'reveal' && <RevealScreen state={game} onNext={() => dispatch({ type: 'next' })} onDuel={() => dispatch({ type: 'startDuel' })} />}
+      {game.phase === 'duel' && <DuelScreen state={game} onResolve={(winner) => dispatch({ type: 'resolveDuel', winner })} />}
     </div>
   )
 }

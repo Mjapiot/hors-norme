@@ -38,9 +38,12 @@ export function Home({ canResume, onNew, onResume }: Props) {
         <ol>
           <li>Une question « le plus… » s’affiche : tout le monde la lit.</li>
           <li>On se passe le téléphone : chaque équipe tape son chiffre en secret.</li>
-          <li>Révélation ! Le plus proche marque 3 pts, le 2e 2 pts, le 3e 1 pt.</li>
-          <li>Bonus : +1 si tu es à moins de 5 %, +3 si c’est <em>tout pile</em>.</li>
-          <li>Toutes les 4 questions : une manche bonus (chrono, classement, plus ou moins).</li>
+          <li>
+            Précision : <strong>3 pts</strong> si tout pile, <strong>2 pts</strong> à moins de 5 %, <strong>1 pt</strong> à moins de 20 %, sinon 0.
+          </li>
+          <li>Le plus proche gagne +1 (s’il a marqué). Égalité parfaite : duel de rapidité.</li>
+          <li>À partir de 3 équipes, une réponse « Hors Norme » (plus du double ou moins de la moitié) coûte 1 point.</li>
+          <li>Une manche bonus toutes les 4 questions, et la dernière question compte double.</li>
         </ol>
       </details>
 

@@ -1,4 +1,6 @@
+import { Backspace } from '@phosphor-icons/react/dist/csr/Backspace'
 import { formatDraft } from '../lib/format'
+import { Ico } from './Icons'
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', '⌫'] as const
 
@@ -30,7 +32,7 @@ export function NumPad({ value, onKey, unit, year = false }: Props) {
               onKey(k)
             }}
           >
-            {k}
+            {k === '⌫' ? <Ico icon={Backspace} size={28} /> : k}
           </button>
         ))}
       </div>

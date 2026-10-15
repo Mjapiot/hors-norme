@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Export } from '@phosphor-icons/react/dist/csr/Export'
+import { Ico } from './Icons'
 import { KEYS, load, save } from '../lib/storage'
 
 function isIos(): boolean {
@@ -19,9 +21,7 @@ export function InstallHint() {
     <div className="install-hint" role="note">
       <p>
         <strong>Installe Hors Norme</strong> : touche{' '}
-        <svg className="share-icon" viewBox="0 0 24 24" aria-label="Partager" role="img">
-          <path d="M12 3v12M7 8l5-5 5 5M5 12v8h14v-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>{' '}
+        <Ico icon={Export} size={18} className="share-icon" /> <span className="sr-only">Partager</span>{' '}
         puis « Sur l’écran d’accueil ». Ça marche même sans réseau.
       </p>
       <button

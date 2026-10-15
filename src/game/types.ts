@@ -8,15 +8,15 @@ export type Theme =
   | 'histoire'
   | 'insolite'
 
-export const THEMES: Record<Theme, { label: string; emoji: string }> = {
-  corps: { label: 'Corps humain', emoji: '🧍' },
-  animaux: { label: 'Animaux', emoji: '🐘' },
-  geo: { label: 'Géographie', emoji: '🌍' },
-  espace: { label: 'Espace', emoji: '🪐' },
-  sport: { label: 'Sport', emoji: '🏅' },
-  constructions: { label: 'Constructions', emoji: '🏗️' },
-  histoire: { label: 'Histoire', emoji: '📜' },
-  insolite: { label: 'Insolite', emoji: '🤯' },
+export const THEMES: Record<Theme, { label: string }> = {
+  corps: { label: 'Corps humain' },
+  animaux: { label: 'Animaux' },
+  geo: { label: 'Géographie' },
+  espace: { label: 'Espace' },
+  sport: { label: 'Sport' },
+  constructions: { label: 'Constructions' },
+  histoire: { label: 'Histoire' },
+  insolite: { label: 'Insolite' },
 }
 
 interface QuestionBase {
@@ -59,10 +59,13 @@ export type RoundKind = Round['kind']
 
 export const ROUND_LABELS: Record<RoundKind, string> = {
   classic: 'Question',
-  chrono: '⚡ Bonus · Chrono 30 s',
-  higherlower: '↕️ Bonus · Plus ou moins',
-  ranking: '📊 Bonus · Classement express',
+  chrono: 'Bonus · Chrono 30 s',
+  higherlower: 'Bonus · Plus ou moins',
+  ranking: 'Bonus · Classement express',
 }
+
+/** Question de départage : plus ou moins d'un seuil, sur l'écran partagé. */
+export type DuelQuestion = { question: NumberQuestion; threshold: number }
 
 export type Answer =
   | { kind: 'number'; value: number | null }
@@ -70,7 +73,7 @@ export type Answer =
   | { kind: 'ranking'; order: number[] }
   | { kind: 'higherlower'; choice: 'plus' | 'moins' | null }
 
-export type EndCondition = { type: 'rounds'; count: 5 | 10 } | { type: 'target'; points: 10 | 15 | 20 }
+export type EndCondition = { type: 'rounds'; count: 5 | 10 } | { type: 'target'; points: 8 | 12 | 15 }
 
 export interface GameConfig {
   mode: 'teams' | 'players'
@@ -80,17 +83,37 @@ export interface GameConfig {
   bonus: boolean
 }
 
-export interface RoundResult {
-  points: number[]
-  /** Étiquette affichée par participant (« Tout pile ! », « à 3 % »…). */
-  notes: string[]
+/** Niveau atteint par une réponse — sert à l'affichage (icône, couleur). */
+export type Tier = 'exact' | 'close' | 'near' | 'far' | 'absurd' | 'none' | 'perfect' | 'partial' | 'miss' | 'good' | 'bad'
+
+export interface Breakdown {
+  /** Points de précision (0 à 3) ou points de la manche bonus. */
+  precision: number
+  /** +1 pour le plus proche (0 tant qu'un duel est en attente). */
+  win: number
+  /** −1 pour une réponse « Hors Norme » (à partir de 3 participants). */
+  malus: number
 }
 
-export type Phase = 'question' | 'handoff' | 'input' | 'reveal' | 'end'
+export interface RoundResult {
+  /** Total de la manche par participant, multiplicateur inclus. */
+  points: number[]
+  breakdown: Breakdown[]
+  /** Écart affiché (« à 12 % », « 2/4 bien placés »…). */
+  labels: string[]
+  tiers: Tier[]
+  multiplier: 1 | 2
+  /** Égalité parfaite pour le point de la manche : départage au duel de rapidité. */
+  duel: { tied: number[]; winner: number | null; resolved: boolean } | null
+}
+
+export type Phase = 'question' | 'handoff' | 'input' | 'reveal' | 'duel' | 'end'
 
 export interface GameState {
   config: GameConfig
   rounds: Round[]
+  /** Réserve de questions pour les duels de rapidité. */
+  duels: DuelQuestion[]
   index: number
   phase: Phase
   turn: number

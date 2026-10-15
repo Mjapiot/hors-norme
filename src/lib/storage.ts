@@ -26,8 +26,8 @@ export function remove(key: string): void {
 }
 
 export const KEYS = {
-  game: 'hn:game:v1',
-  config: 'hn:config:v1',
+  game: 'hn:game:v2',
+  config: 'hn:config:v2',
   seen: 'hn:seen:v1',
   installHint: 'hn:install-hint-dismissed',
 }

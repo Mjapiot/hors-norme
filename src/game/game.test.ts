@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { QUESTIONS } from '../data/questions'
-import { buildRounds, makeThreshold, roundNice } from './deck'
-import { initialState, isOver, reducer, standings } from './engine'
-import { competitionRanks, podiumPoints, scoreHigherLower, scoreNumber, scoreRanking } from './scoring'
+import { buildDuels, buildRounds, makeThreshold, roundNice } from './deck'
+import { initialState, isDoubleRound, isOver, reducer, standings } from './engine'
+import { isAbsurd, precisionFor, resolveDuel, scoreHigherLower, scoreNumber, scoreRanking, shareTie } from './scoring'
 import type { GameConfig, GameState, NumberQuestion } from './types'
 import { applyKey, formatDraft, frenchSpacing, parseDraft } from '../lib/format'
 
@@ -30,56 +30,83 @@ function config(partial: Partial<GameConfig> = {}): GameConfig {
   }
 }
 
-describe('scoring — questions chiffrées', () => {
-  it('classe au plus proche avec podium 3/2/1', () => {
-    const r = scoreNumber([100, 140, 300, 80], 120)
-    // écarts : 16,7 % / 16,7 % / 150 % / 33 % → A et B ex-æquo 1ers
-    expect(r.points).toEqual([3, 3, 0, 1])
+describe('scoring — précision + gagnant de manche', () => {
+  it('paliers de précision : tout pile 3, < 5 % 2, < 20 % 1, sinon 0', () => {
+    expect(precisionFor(0).points).toBe(3)
+    expect(precisionFor(0.04).points).toBe(2)
+    expect(precisionFor(0.05).points).toBe(2)
+    expect(precisionFor(0.15).points).toBe(1)
+    expect(precisionFor(0.2).points).toBe(1)
+    expect(precisionFor(0.21).points).toBe(0)
   })
 
-  it('le dernier ne marque pas de points de classement à 2 joueurs', () => {
-    expect(scoreNumber([50, 200], 100).points).toEqual([3, 0])
+  it('le plus proche gagne +1 ; le second ne marque que sa précision', () => {
+    // 2 équipes : 8 700 (à 1,7 %) et 7 500 (à 15 %) pour 8 849
+    const r = scoreNumber([8700, 7500], 8849)
+    expect(r.points).toEqual([2 + 1, 1])
   })
 
-  it('bonus +3 pour « tout pile » et +1 sous 5 %', () => {
-    const r = scoreNumber([8849, 8900, 5000], 8849)
-    expect(r.points).toEqual([3 + 3, 2 + 1, 0])
-    expect(r.notes[0]).toContain('Tout pile')
+  it('deux équipes trop loin : 0 point pour tout le monde, pas de point de manche', () => {
+    const r = scoreNumber([50, 200], 8849)
+    expect(r.points).toEqual([0, 0])
+    expect(r.duel).toBeNull()
   })
 
-  it('une absence de réponse vaut 0 et ne prend pas de rang', () => {
-    const r = scoreNumber([null, 10, 20], 10)
-    expect(r.points).toEqual([0, 6, 2])
-    expect(r.notes[0]).toBe('Pas de réponse')
+  it('tout pile : 3 + 1', () => {
+    const r = scoreNumber([8849, 9000], 8849)
+    expect(r.points).toEqual([4, 2])
+    expect(r.labels[0]).toBe('Tout pile')
+  })
+
+  it('égalité parfaite entre les meilleurs → duel en attente, sans point de manche', () => {
+    const r = scoreNumber([110, 90, 300], 100)
+    expect(r.duel).toEqual({ tied: [0, 1], winner: null, resolved: false })
+    expect(r.points).toEqual([1, 1, -1])
+    const resolved = resolveDuel(r, 1)
+    expect(resolved.points).toEqual([1, 2, -1])
+    expect(resolved.duel?.resolved).toBe(true)
+  })
+
+  it('sans question de duel, les ex-æquo partagent le point', () => {
+    expect(shareTie(scoreNumber([110, 90], 100)).points).toEqual([2, 2])
+  })
+
+  it('malus « Hors Norme » seulement à partir de 3 participants', () => {
+    expect(scoreNumber([100, 250], 100).points).toEqual([4, 0])
+    const r = scoreNumber([100, 250, 40, 60], 100)
+    expect(r.points).toEqual([4, -1, -1, 0])
+    expect(r.tiers[1]).toBe('absurd')
+    expect(isAbsurd(201, 100)).toBe(true)
+    expect(isAbsurd(200, 100)).toBe(false)
+    expect(isAbsurd(49, 100)).toBe(true)
+  })
+
+  it('une absence de réponse vaut 0, sans malus', () => {
+    const r = scoreNumber([null, 10, 30], 10)
+    expect(r.points).toEqual([0, 4, -1])
+    expect(r.labels[0]).toBe('Pas de réponse')
   })
 
   it('juge les années en écart absolu', () => {
-    const r = scoreNumber([1830, 1800], 1832, true)
-    expect(r.points).toEqual([3 + 1, 0])
-    expect(r.notes[0]).toContain('2 ans')
+    const r = scoreNumber([1830, 1815, 1700], 1832, true)
+    expect(r.points).toEqual([2 + 1, 1, 0])
+    expect(r.labels[0]).toContain('2 ans')
   })
 
-  it('gère une réponse attendue à zéro sans division par zéro', () => {
-    expect(scoreNumber([0, 1], 0).points).toEqual([6, 0])
-  })
-
-  it('rangs compétition et podium', () => {
-    expect(competitionRanks([0.1, 0.1, 0.5, null])).toEqual([1, 1, 3, null])
-    expect(podiumPoints(1, 1)).toBe(3)
-    expect(podiumPoints(3, 3)).toBe(0)
-    expect(podiumPoints(3, 4)).toBe(1)
+  it('points doublés sur demande', () => {
+    expect(scoreNumber([100, 250, 30], 100, false, { multiplier: 2 }).points).toEqual([8, -2, -2])
   })
 })
 
 describe('scoring — manches bonus', () => {
-  it('classement : 1 pt par position juste, +2 si parfait', () => {
+  it('classement : 3 si parfait, 1 si 2 bien placés, sinon 0', () => {
     const values = [14, 22, 71, 106]
     const r = scoreRanking([[0, 1, 2, 3], [1, 0, 2, 3], [3, 2, 1, 0]], values)
-    expect(r.points).toEqual([6, 2, 0])
+    expect(r.points).toEqual([3, 1, 0])
   })
 
-  it('plus ou moins : 2 pts si juste', () => {
-    expect(scoreHigherLower(['plus', 'moins', null], 120, 100).points).toEqual([2, 0, 0])
+  it('plus ou moins : 1 pt si juste', () => {
+    expect(scoreHigherLower(['plus', 'moins', null], 120, 100).points).toEqual([1, 0, 0])
   })
 })
 
@@ -163,10 +190,10 @@ describe('moteur de partie', () => {
   })
 
   it('mode points cibles : s’arrête quand un leader unique atteint l’objectif', () => {
-    const cfg = config({ names: ['A', 'B'], bonus: false, end: { type: 'target', points: 10 } })
+    const cfg = config({ names: ['A', 'B'], bonus: false, end: { type: 'target', points: 8 } })
     const s = initialState(cfg, buildRounds(QUESTIONS, cfg, new Set(), seeded(4)))
-    expect(isOver({ ...s, scores: [9, 3] })).toBe(false)
-    expect(isOver({ ...s, scores: [10, 3] })).toBe(true)
+    expect(isOver({ ...s, scores: [7, 3] })).toBe(false)
+    expect(isOver({ ...s, scores: [8, 3] })).toBe(true)
     expect(isOver({ ...s, scores: [12, 12] })).toBe(false)
   })
 
@@ -175,6 +202,44 @@ describe('moteur de partie', () => {
     const s = initialState(cfg, buildRounds(QUESTIONS, cfg, new Set(), seeded(5)))
     expect(reducer(s, { type: 'next' })).toBe(s)
     expect(reducer(s, { type: 'submit', answer: { kind: 'number', value: 1 } })).toBe(s)
+  })
+
+  it('dernière question à points doublés (mode nombre de questions)', () => {
+    const cfg = config({ names: ['A', 'B'], bonus: false, end: { type: 'rounds', count: 5 } })
+    const s = initialState(cfg, buildRounds(QUESTIONS, cfg, new Set(), seeded(6)))
+    expect(isDoubleRound(s)).toBe(false)
+    expect(isDoubleRound({ ...s, index: 4 })).toBe(true)
+    expect(isDoubleRound({ ...s, index: 4, config: { ...cfg, end: { type: 'target', points: 8 } } })).toBe(false)
+  })
+
+  it('égalité → duel → point attribué au vainqueur, scores jamais négatifs', () => {
+    const cfg = config({ names: ['A', 'B', 'C'], bonus: false, end: { type: 'rounds', count: 5 } })
+    const rounds = buildRounds(QUESTIONS, cfg, new Set(), seeded(7))
+    const answer = (rounds[0].question as NumberQuestion).answer
+    let s: GameState | null = initialState(cfg, rounds, buildDuels(QUESTIONS, rounds, seeded(8)))
+    s = reducer(s, { type: 'beginAnswers' })
+    for (const v of [answer * 1.1, answer * 0.9, answer * 10]) {
+      s = reducer(s, { type: 'ready' })
+      s = reducer(s, { type: 'submit', answer: { kind: 'number', value: v } })
+    }
+    expect(s!.phase).toBe('reveal')
+    expect(s!.scores).toEqual([1, 1, 0]) // C : −1 mais plancher à 0
+    expect(reducer(s, { type: 'next' })).toBe(s) // duel obligatoire avant de continuer
+    s = reducer(s, { type: 'startDuel' })
+    expect(s!.phase).toBe('duel')
+    s = reducer(s, { type: 'resolveDuel', winner: 0 })
+    expect(s!.phase).toBe('reveal')
+    expect(s!.scores).toEqual([2, 1, 0])
+    expect(reducer(s, { type: 'next' })!.phase).toBe('question')
+  })
+
+  it('les questions de duel ne recoupent jamais la partie et ne sont jamais des années', () => {
+    const cfg = config()
+    const rounds = buildRounds(QUESTIONS, cfg, new Set(), seeded(10))
+    const duels = buildDuels(QUESTIONS, rounds, seeded(11))
+    const ids = new Set(rounds.map((r) => r.question.id))
+    expect(duels.length).toBeGreaterThan(0)
+    expect(duels.every((d) => !ids.has(d.question.id) && !d.question.year && d.threshold !== d.question.answer)).toBe(true)
   })
 
   it('classement final avec ex-æquo', () => {

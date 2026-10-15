@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import { ArrowLeft } from '@phosphor-icons/react/dist/csr/ArrowLeft'
+import { Flag } from '@phosphor-icons/react/dist/csr/Flag'
+import { Plus } from '@phosphor-icons/react/dist/csr/Plus'
+import { X } from '@phosphor-icons/react/dist/csr/X'
+import { Ico, THEME_ICONS } from '../components/Icons'
 import { QUESTIONS } from '../data/questions'
 import { colorFor } from '../lib/format'
 import { THEMES } from '../game/types'
@@ -21,9 +26,9 @@ export const DEFAULT_CONFIG: GameConfig = {
 const END_OPTIONS: { label: string; value: EndCondition }[] = [
   { label: '5 questions', value: { type: 'rounds', count: 5 } },
   { label: '10 questions', value: { type: 'rounds', count: 10 } },
-  { label: '10 pts', value: { type: 'target', points: 10 } },
+  { label: '8 pts', value: { type: 'target', points: 8 } },
+  { label: '12 pts', value: { type: 'target', points: 12 } },
   { label: '15 pts', value: { type: 'target', points: 15 } },
-  { label: '20 pts', value: { type: 'target', points: 20 } },
 ]
 
 const sameEnd = (a: EndCondition, b: EndCondition) => JSON.stringify(a) === JSON.stringify(b)
@@ -38,7 +43,7 @@ export function Setup({ initial, onBack, onStart }: Props) {
   const [cfg, setCfg] = useState<GameConfig>(initial)
   const limits = LIMITS[cfg.mode]
   const available = QUESTIONS.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
-  const needed = cfg.end.type === 'rounds' ? cfg.end.count : 15
+  const needed = cfg.end.type === 'rounds' ? cfg.end.count : 14
 
   const setMode = (mode: GameConfig['mode']) => {
     const max = LIMITS[mode].max
@@ -62,7 +67,7 @@ export function Setup({ initial, onBack, onStart }: Props) {
     <main className="screen setup">
       <header className="topbar">
         <button type="button" className="icon-btn" onClick={onBack} aria-label="Retour">
-          ←
+          <Ico icon={ArrowLeft} size={20} />
         </button>
         <h2>Nouvelle partie</h2>
       </header>
@@ -93,7 +98,7 @@ export function Setup({ initial, onBack, onStart }: Props) {
               />
               {cfg.names.length > limits.min && (
                 <button type="button" className="icon-btn small" aria-label={`Retirer ${name}`} onClick={() => setCfg({ ...cfg, names: cfg.names.filter((_, k) => k !== i) })}>
-                  ×
+                  <Ico icon={X} size={18} />
                 </button>
               )}
             </li>
@@ -101,7 +106,7 @@ export function Setup({ initial, onBack, onStart }: Props) {
         </ul>
         {cfg.names.length < limits.max && (
           <button type="button" className="btn btn-ghost small" onClick={() => setCfg({ ...cfg, names: [...cfg.names, defaultName(cfg.mode, cfg.names.length)] })}>
-            + Ajouter {cfg.mode === 'teams' ? 'une équipe' : 'un joueur'}
+            <Ico icon={Plus} size={18} /> Ajouter {cfg.mode === 'teams' ? 'une équipe' : 'un joueur'}
           </button>
         )}
       </section>
@@ -111,7 +116,7 @@ export function Setup({ initial, onBack, onStart }: Props) {
         <div className="chips">
           {END_OPTIONS.map((o) => (
             <button key={o.label} type="button" className={`chip${sameEnd(cfg.end, o.value) ? ' active' : ''}`} onClick={() => setCfg({ ...cfg, end: o.value })}>
-              {o.value.type === 'target' ? '🎯 ' : ''}
+              {o.value.type === 'target' && <Ico icon={Flag} size={16} />}
               {o.label}
             </button>
           ))}
@@ -128,7 +133,8 @@ export function Setup({ initial, onBack, onStart }: Props) {
         <div className="chips">
           {ALL_THEMES.map((t) => (
             <button key={t} type="button" className={`chip${cfg.themes.includes(t) ? ' active' : ''}`} onClick={() => toggleTheme(t)}>
-              {THEMES[t].emoji} {THEMES[t].label}
+              <Ico icon={THEME_ICONS[t]} size={17} />
+              {THEMES[t].label}
             </button>
           ))}
         </div>
@@ -142,7 +148,7 @@ export function Setup({ initial, onBack, onStart }: Props) {
           <input type="checkbox" checked={cfg.bonus} onChange={(e) => setCfg({ ...cfg, bonus: e.target.checked })} />
           <span>
             Manches bonus
-            <small>Chrono, classement, plus ou moins — toutes les 4 questions</small>
+            <small>Chrono, classement, plus ou moins : une toutes les 4 questions</small>
           </span>
         </label>
       </section>

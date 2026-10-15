@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { Lightning } from '@phosphor-icons/react/dist/csr/Lightning'
+import { Medal } from '@phosphor-icons/react/dist/csr/Medal'
+import { Sword } from '@phosphor-icons/react/dist/csr/Sword'
+import { Trophy } from '@phosphor-icons/react/dist/csr/Trophy'
+import { Ico, TIER_ICONS } from '../components/Icons'
 import { colorFor, formatNumber, frenchSpacing } from '../lib/format'
 import { correctRanking } from '../game/scoring'
 import { isOver, standings } from '../game/engine'
-import type { Answer, GameState, NumberQuestion, Round } from '../game/types'
+import type { Answer, Breakdown, GameState, NumberQuestion, Round } from '../game/types'
 
 /** Compteur animé jusqu'à la valeur cible. */
 function useCountUp(target: number, durationMs = 1100): number {
@@ -63,8 +68,14 @@ function answerLabel(round: Round, answer: Answer): string {
     if (answer.value === null) return '—'
     return formatNumber(answer.value, round.kind !== 'ranking' && round.question.year)
   }
-  if (answer.kind === 'higherlower') return answer.choice === null ? '—' : answer.choice === 'plus' ? '⬆︎ Plus' : '⬇︎ Moins'
+  if (answer.kind === 'higherlower') return answer.choice === null ? '—' : answer.choice === 'plus' ? 'Plus' : 'Moins'
   return ''
+}
+
+function formatDelta(points: number): string {
+  if (points > 0) return `+${points}`
+  if (points < 0) return `−${Math.abs(points)}`
+  return '0'
 }
 
 function SourceLine({ round }: { round: Round }) {
@@ -78,12 +89,36 @@ function SourceLine({ round }: { round: Round }) {
   )
 }
 
-export function RevealScreen({ state, onNext }: { state: GameState; onNext: () => void }) {
+/** Détail lisible des points : on apprend les règles en jouant. */
+function PointChips({ breakdown, multiplier, pendingDuel, bonusRound }: { breakdown: Breakdown; multiplier: number; pendingDuel: boolean; bonusRound: boolean }) {
+  const chips: { label: string; tone: 'good' | 'bad' | 'neutral' }[] = []
+  if (breakdown.precision > 0) chips.push({ label: `${bonusRound ? 'Bonus' : 'Précision'} +${breakdown.precision}`, tone: 'good' })
+  if (breakdown.win > 0) chips.push({ label: `Plus proche +${breakdown.win}`, tone: 'good' })
+  if (breakdown.malus < 0) chips.push({ label: `Hors Norme −${Math.abs(breakdown.malus)}`, tone: 'bad' })
+  if (pendingDuel) chips.push({ label: 'Duel pour le point de manche', tone: 'neutral' })
+  if (multiplier > 1 && (breakdown.precision || breakdown.win || breakdown.malus)) chips.push({ label: `×${multiplier}`, tone: 'neutral' })
+  if (chips.length === 0) return null
+  return (
+    <span className="chips-inline">
+      {chips.map((c) => (
+        <span key={c.label} className={`pt-chip pt-${c.tone}`}>
+          {c.label}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+export function RevealScreen({ state, onNext, onDuel }: { state: GameState; onNext: () => void; onDuel: () => void }) {
   const round = state.rounds[state.index]
   const result = state.results[state.results.length - 1]
   const { names } = state.config
-  const rows = names.map((name, i) => ({ name, i, answer: state.answers[i], points: result.points[i], note: result.notes[i] })).sort((a, b) => b.points - a.points || a.i - b.i)
+  const pendingDuel = result.duel !== null && !result.duel.resolved
+  const rows = names
+    .map((name, i) => ({ name, i, answer: state.answers[i], points: result.points[i] }))
+    .sort((a, b) => b.points - a.points || a.i - b.i)
   const last = isOver(state)
+  const bonusRound = round.kind === 'ranking' || round.kind === 'higherlower'
 
   return (
     <main className="screen reveal">
@@ -118,25 +153,62 @@ export function RevealScreen({ state, onNext }: { state: GameState; onNext: () =
         </ol>
       )}
 
+      {result.multiplier > 1 && (
+        <p className="double-banner">
+          <Ico icon={Lightning} size={18} weight="fill" /> Points doublés
+        </p>
+      )}
+
       <ul className="results">
-        {rows.map((r, k) => (
-          <li key={r.i} style={{ animationDelay: `${1.2 + k * 0.1}s` }}>
-            <span className="dot" style={{ background: colorFor(r.i) }} />
-            <span className="results-name">{r.name}</span>
-            <span className="results-answer">{answerLabel(round, r.answer)}</span>
-            <span className="results-note">{r.note}</span>
-            <span className={`results-points${r.points > 0 ? ' positive' : ''}`}>+{r.points}</span>
-          </li>
-        ))}
+        {rows.map((r, k) => {
+          const tier = result.tiers[r.i]
+          const TierIcon = TIER_ICONS[tier]
+          return (
+            <li key={r.i} className={`tier-${tier}`} style={{ animationDelay: `${1.2 + k * 0.1}s` }}>
+              <span className="dot" style={{ background: colorFor(r.i) }} />
+              <span className="results-name">{r.name}</span>
+              <span className="results-answer">{answerLabel(round, r.answer)}</span>
+              <span className="results-note">
+                {TierIcon && <Ico icon={TierIcon} size={15} />}
+                {tier === 'absurd' ? `Hors Norme · ${result.labels[r.i]}` : result.labels[r.i]}
+              </span>
+              <span className={`results-points${r.points > 0 ? ' positive' : r.points < 0 ? ' negative' : ''}`}>{formatDelta(r.points)}</span>
+              <PointChips
+                breakdown={result.breakdown[r.i]}
+                multiplier={result.multiplier}
+                pendingDuel={pendingDuel && (result.duel?.tied.includes(r.i) ?? false)}
+                bonusRound={bonusRound}
+              />
+            </li>
+          )
+        })}
       </ul>
+
+      {result.duel?.resolved && (
+        <p className="verdict">
+          {result.duel.winner === null ? 'Duel : personne ne remporte le point de la manche.' : `Duel remporté par ${names[result.duel.winner]}.`}
+        </p>
+      )}
 
       <Scoreboard state={state} />
       <SourceLine round={round} />
 
       <div className="sticky-cta">
-        <button type="button" className="btn btn-primary" onClick={onNext}>
-          {last ? 'Voir le podium 🏆' : 'Question suivante'}
-        </button>
+        {pendingDuel ? (
+          <button type="button" className="btn btn-primary btn-icon" onClick={onDuel}>
+            <Ico icon={Sword} size={22} /> Duel de rapidité
+          </button>
+        ) : (
+          <button type="button" className="btn btn-primary btn-icon" onClick={onNext}>
+            {last ? (
+              <>
+                <Ico icon={Trophy} size={22} /> Voir le podium
+              </>
+            ) : (
+              'Question suivante'
+            )}
+          </button>
+        )}
       </div>
     </main>
   )
@@ -164,7 +236,6 @@ function Scoreboard({ state }: { state: GameState }) {
 export function EndScreen({ state, onReplay, onHome }: { state: GameState; onReplay: () => void; onHome: () => void }) {
   const ranking = standings(state.scores)
   const podium = ranking.slice(0, 3)
-  const medals = ['🥇', '🥈', '🥉']
   const winners = ranking.filter((r) => r.rank === 1).map((r) => state.config.names[r.index])
 
   return (
@@ -175,7 +246,10 @@ export function EndScreen({ state, onReplay, onHome }: { state: GameState; onRep
       <ol className="podium">
         {podium.map((r, slot) => (
           <li key={r.index} className={`podium-step slot-${slot + 1}`} style={{ '--team': colorFor(r.index) } as CSSProperties}>
-            <span className="podium-medal">{medals[r.rank - 1]}</span>
+            <span className={`podium-medal medal-${r.rank}`}>
+              <Ico icon={r.rank === 1 ? Trophy : Medal} size={34} weight="fill" />
+              <span className="podium-rank">{r.rank}</span>
+            </span>
             <span className="podium-name">{state.config.names[r.index]}</span>
             <span className="podium-score">{r.score} pts</span>
           </li>

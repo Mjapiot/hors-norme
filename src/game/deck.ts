@@ -1,4 +1,4 @@
-import type { GameConfig, NumberQuestion, Question, RankingQuestion, Round, RoundKind } from './types'
+import type { DuelQuestion, GameConfig, NumberQuestion, Question, RankingQuestion, Round, RoundKind } from './types'
 
 export type Rng = () => number
 
@@ -95,4 +95,19 @@ export function buildRounds(
     rounds.push({ kind, question })
   }
   return rounds
+}
+
+/** Nombre de questions de départage préparées par partie. */
+export const DUEL_RESERVE = 8
+
+/**
+ * Réserve de questions « plus ou moins » pour les duels de rapidité :
+ * jamais une question déjà prévue dans la partie, jamais une année.
+ */
+export function buildDuels(questions: Question[], rounds: Round[], rng: Rng = Math.random): DuelQuestion[] {
+  const used = new Set(rounds.map((r) => r.question.id))
+  const pool = questions.filter((q): q is NumberQuestion => q.type === 'number' && !q.year && !used.has(q.id))
+  return shuffle(pool, rng)
+    .slice(0, DUEL_RESERVE)
+    .map((question) => ({ question, threshold: makeThreshold(question.answer, rng) }))
 }
