@@ -43,7 +43,21 @@ export function ImportPanel({ existingIds, onImport, onClose }: Props) {
             Fermer
           </button>
         </header>
-        <p className="admin-meta">Colle un tableau JSON. Les questions arrivent au statut « À relire » sauf si un statut est précisé. Un identifiant existant est mis à jour.</p>
+        <label className="admin-file">
+          Choisir un fichier .json
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              setText(await file.text())
+              setPreview(null)
+              setProblems([])
+            }}
+          />
+        </label>
+        <p className="admin-meta">Ou colle un tableau JSON. Les questions arrivent au statut « À relire » sauf si un statut est précisé. Un identifiant existant est mis à jour.</p>
         <textarea rows={12} value={text} onChange={(e) => setText(e.target.value)} placeholder='[{ "theme": "sport", "type": "number", "prompt": "…", "unit": "m", "answer": 12.3, "source": "…" }]' />
         <div className="admin-row">
           <button type="button" className="btn btn-ghost small" onClick={analyse}>

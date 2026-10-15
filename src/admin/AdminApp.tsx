@@ -244,6 +244,7 @@ function Dashboard({ session }: { session: Session }) {
                     {q.id} · {THEMES[q.theme].label}
                   </span>
                   {q.prompt}
+                  {q.notes && <span className="admin-note">{q.notes}</span>}
                 </td>
                 <td className="admin-answer">
                   {q.type === 'number' ? `${formatNumber(q.answer ?? 0, q.year)} ${q.unit}` : 'Classement'}

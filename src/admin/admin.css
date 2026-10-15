@@ -273,3 +273,19 @@ body.admin-mode #root {
   color: var(--bad);
   margin-right: auto;
 }
+
+.admin-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.admin-file {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
