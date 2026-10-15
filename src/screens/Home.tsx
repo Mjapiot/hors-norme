@@ -1,14 +1,17 @@
+import { Question } from '@phosphor-icons/react/dist/csr/Question'
+import { Ico } from '../components/Icons'
 import { InstallHint } from '../components/InstallHint'
 import { QUESTIONS } from '../data/questions'
 import { isAdmin } from '../lib/admin'
 
 interface Props {
   canResume: boolean
+  onHelp: () => void
   onNew: () => void
   onResume: () => void
 }
 
-export function Home({ canResume, onNew, onResume }: Props) {
+export function Home({ canResume, onNew, onResume, onHelp }: Props) {
   return (
     <main className="screen home">
       <div className="home-hero">
@@ -34,19 +37,9 @@ export function Home({ canResume, onNew, onResume }: Props) {
 
       <InstallHint />
 
-      <details className="rules">
-        <summary>Comment on joue ?</summary>
-        <ol>
-          <li>Une question « le plus… » s’affiche : tout le monde la lit.</li>
-          <li>On se passe le téléphone : chaque équipe tape son chiffre en secret.</li>
-          <li>
-            Précision : <strong>3 pts</strong> si tout pile, <strong>2 pts</strong> à moins de 5 %, <strong>1 pt</strong> à moins de 20 %, sinon 0.
-          </li>
-          <li>Le plus proche gagne +1 (s’il a marqué). Égalité parfaite : duel de rapidité.</li>
-          <li>À partir de 3 équipes, une réponse « Hors Norme » (plus du double ou moins de la moitié) coûte 1 point.</li>
-          <li>Une manche bonus toutes les 4 questions, et la dernière question compte double (sauf le malus).</li>
-        </ol>
-      </details>
+      <button type="button" className="btn btn-ghost btn-icon" onClick={onHelp}>
+        <Ico icon={Question} size={22} /> Comment on joue&nbsp;?
+      </button>
 
       <p className="footnote">
         {QUESTIONS.length} questions

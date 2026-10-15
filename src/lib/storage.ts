@@ -31,6 +31,7 @@ export const KEYS = {
   seen: 'hn:seen:v1',
   installHint: 'hn:install-hint-dismissed',
   sound: 'hn:sound',
+  tutorial: 'hn:tutorial-seen',
   admin: 'hn:admin',
 }
 

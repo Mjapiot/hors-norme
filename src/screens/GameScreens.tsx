@@ -7,6 +7,7 @@ import { Flag } from '@phosphor-icons/react/dist/csr/Flag'
 import { Lightning } from '@phosphor-icons/react/dist/csr/Lightning'
 import { Sword } from '@phosphor-icons/react/dist/csr/Sword'
 import { X } from '@phosphor-icons/react/dist/csr/X'
+import { Question } from '@phosphor-icons/react/dist/csr/Question'
 import { ArrowCounterClockwise } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise'
 import { Envelope } from '@phosphor-icons/react/dist/csr/Envelope'
 import { LockKey } from '@phosphor-icons/react/dist/csr/LockKey'
@@ -44,7 +45,7 @@ function SoundToggle() {
   )
 }
 
-export function GameHeader({ state, onQuit }: { state: GameState; onQuit: () => void }) {
+export function GameHeader({ state, onQuit, onHelp }: { state: GameState; onQuit: () => void; onHelp: () => void }) {
   const { end } = state.config
   return (
     <header className="topbar game-topbar">
@@ -58,6 +59,9 @@ export function GameHeader({ state, onQuit }: { state: GameState; onQuit: () => 
         )}
       </span>
       <span className="topbar-actions">
+        <button type="button" className="icon-btn" aria-label="Rappel des règles" onClick={onHelp}>
+          <Ico icon={Question} size={20} />
+        </button>
         <SoundToggle />
         <button
           type="button"

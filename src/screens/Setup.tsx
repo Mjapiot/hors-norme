@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft } from '@phosphor-icons/react/dist/csr/ArrowLeft'
+import { Question } from '@phosphor-icons/react/dist/csr/Question'
 import { Flag } from '@phosphor-icons/react/dist/csr/Flag'
 import { Plus } from '@phosphor-icons/react/dist/csr/Plus'
 import { X } from '@phosphor-icons/react/dist/csr/X'
@@ -34,12 +35,13 @@ const END_OPTIONS: { label: string; value: EndCondition }[] = [
 const sameEnd = (a: EndCondition, b: EndCondition) => JSON.stringify(a) === JSON.stringify(b)
 
 interface Props {
+  onHelp: () => void
   initial: GameConfig
   onBack: () => void
   onStart: (config: GameConfig) => void
 }
 
-export function Setup({ initial, onBack, onStart }: Props) {
+export function Setup({ initial, onBack, onStart, onHelp }: Props) {
   const [cfg, setCfg] = useState<GameConfig>(initial)
   const limits = LIMITS[cfg.mode]
   const available = QUESTIONS.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
@@ -70,6 +72,9 @@ export function Setup({ initial, onBack, onStart }: Props) {
           <Ico icon={ArrowLeft} size={20} />
         </button>
         <h2>Nouvelle partie</h2>
+        <button type="button" className="link link-icon topbar-end" onClick={onHelp}>
+          <Ico icon={Question} size={18} /> Rappel des règles
+        </button>
       </header>
 
       <section>

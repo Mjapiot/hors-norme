@@ -8,6 +8,7 @@ import { Home } from './screens/Home'
 import { DEFAULT_CONFIG, Setup } from './screens/Setup'
 import { AllInScreen, DuelScreen, GameHeader, HandoffScreen, InputScreen, QuestionScreen } from './screens/GameScreens'
 import { useWakeLock } from './lib/wakeLock'
+import { Tutorial } from './components/Tutorial'
 import { track } from '@vercel/analytics'
 import { EndScreen, RevealScreen } from './screens/Reveal'
 
@@ -16,6 +17,13 @@ type Screen = 'home' | 'setup' | 'game'
 export default function App() {
   const [game, dispatch] = useReducer(reducer, null, () => resumeState(load<GameState | null>(KEYS.game, null)))
   const [screen, setScreen] = useState<Screen>('home')
+  // Tutoriel : ouvert automatiquement au tout premier lancement.
+  const [tutorial, setTutorial] = useState(() => !load(KEYS.tutorial, false))
+  const openHelp = useCallback(() => setTutorial(true), [])
+  const closeHelp = useCallback(() => {
+    save(KEYS.tutorial, true)
+    setTutorial(false)
+  }, [])
   useWakeLock(screen === 'game' && game !== null && game.phase !== 'end')
 
   // Sauvegarde continue : on reprend la partie après un verrouillage d'écran ou un rechargement.
@@ -51,27 +59,31 @@ export default function App() {
     setScreen('home')
   }
 
+  let content
   if (screen === 'setup') {
-    return <Setup initial={load(KEYS.config, DEFAULT_CONFIG)} onBack={() => setScreen('home')} onStart={start} />
-  }
-
-  if (screen === 'home' || !game) {
-    return <Home canResume={game !== null && game.phase !== 'end'} onNew={() => setScreen('setup')} onResume={() => setScreen('game')} />
-  }
-
-  if (game.phase === 'end') {
-    return <EndScreen state={game} onReplay={() => start(game.config)} onHome={goHome} />
+    content = <Setup initial={load(KEYS.config, DEFAULT_CONFIG)} onBack={() => setScreen('home')} onStart={start} onHelp={openHelp} />
+  } else if (screen === 'home' || !game) {
+    content = <Home canResume={game !== null && game.phase !== 'end'} onNew={() => setScreen('setup')} onResume={() => setScreen('game')} onHelp={openHelp} />
+  } else if (game.phase === 'end') {
+    content = <EndScreen state={game} onReplay={() => start(game.config)} onHome={goHome} />
+  } else {
+    content = (
+      <div className="game">
+        {(game.phase === 'question' || game.phase === 'reveal') && <GameHeader state={game} onQuit={goHome} onHelp={openHelp} />}
+        {game.phase === 'question' && <QuestionScreen state={game} onGo={() => dispatch({ type: 'beginAnswers' })} />}
+        {game.phase === 'handoff' && <HandoffScreen state={game} onReady={() => dispatch({ type: 'ready' })} onUndo={() => dispatch({ type: 'undo' })} />}
+        {game.phase === 'input' && <InputScreen state={game} onSubmit={submit} />}
+        {game.phase === 'allin' && <AllInScreen state={game} onReveal={() => dispatch({ type: 'reveal' })} onUndo={() => dispatch({ type: 'undo' })} />}
+        {game.phase === 'reveal' && <RevealScreen state={game} onNext={() => dispatch({ type: 'next' })} onDuel={() => dispatch({ type: 'startDuel' })} />}
+        {game.phase === 'duel' && <DuelScreen state={game} onResolve={(winner) => dispatch({ type: 'resolveDuel', winner })} />}
+      </div>
+    )
   }
 
   return (
-    <div className="game">
-      {(game.phase === 'question' || game.phase === 'reveal') && <GameHeader state={game} onQuit={goHome} />}
-      {game.phase === 'question' && <QuestionScreen state={game} onGo={() => dispatch({ type: 'beginAnswers' })} />}
-      {game.phase === 'handoff' && <HandoffScreen state={game} onReady={() => dispatch({ type: 'ready' })} onUndo={() => dispatch({ type: 'undo' })} />}
-      {game.phase === 'input' && <InputScreen state={game} onSubmit={submit} />}
-      {game.phase === 'allin' && <AllInScreen state={game} onReveal={() => dispatch({ type: 'reveal' })} onUndo={() => dispatch({ type: 'undo' })} />}
-      {game.phase === 'reveal' && <RevealScreen state={game} onNext={() => dispatch({ type: 'next' })} onDuel={() => dispatch({ type: 'startDuel' })} />}
-      {game.phase === 'duel' && <DuelScreen state={game} onResolve={(winner) => dispatch({ type: 'resolveDuel', winner })} />}
-    </div>
+    <>
+      {content}
+      {tutorial && <Tutorial onClose={closeHelp} />}
+    </>
   )
 }
