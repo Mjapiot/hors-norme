@@ -14,6 +14,17 @@ npm run build && npm run preview   # version de production + service worker
 
 Pour tester sur un iPhone du même réseau Wi-Fi : `npm run dev -- --host`, puis ouvrir l'URL affichée dans Safari.
 
+## Supabase (lot 2)
+
+- Schéma et import des questions : `supabase/migrations/` — appliqués automatiquement en production par l'intégration
+  GitHub de Supabase à chaque push sur `main`.
+- Variables (Vercel → Settings → Environment Variables, et `.env.local` en local) : `SUPABASE_URL` et `SUPABASE_ANON_KEY`
+  (clé publique). Vercel refuse le préfixe `VITE_` : `vite.config.ts` injecte uniquement ces deux valeurs dans l'app.
+- Sans ces variables, le jeu fonctionne avec les questions embarquées (`src/data/questions.ts`).
+- Back-office : `/admin` (connexion par lien e-mail). Ajouter un admin dans le SQL editor :
+  `insert into public.admin_emails (email) values ('email@exemple.com');`
+- Regénérer la migration d'import depuis le fichier local : `npm run seed:export`.
+
 ## Règles du jeu
 
 **Questions chiffrées** (classique et Chrono 30 s) — chacun marque selon *sa* précision :
