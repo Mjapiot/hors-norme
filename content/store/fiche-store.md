@@ -75,6 +75,7 @@ Le jeu convient à tous, mais cibler les moins de 13 ans fait entrer l'app dans 
 | Store | Format | Dossier |
 | --- | --- | --- |
 | App Store — iPhone 6,9" | 1320 × 2868 px (PNG) | `visuels/ios-6.9/` |
+| App Store — iPhone 6,3" (format demandé par App Store Connect en 2026) | 1206 × 2622 px (JPEG) | `visuels/ios-6.3/` |
 | Google Play — téléphone | 1080 × 1920 px (PNG) | `visuels/android/` |
 
 Ordre conseillé (6 visuels, accroche + capture) : 1. accueil · 2. question · 3. saisie secrète · 4. révélation « tout pile » · 5. duel de rapidité · 6. tutoriel.
