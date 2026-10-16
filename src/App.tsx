@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { App as NativeApp } from '@capacitor/app'
 import { isNative } from './lib/native'
-import { getQuestions, syncQuestions } from './data/bank'
+import { getQuestions, syncPackQuestions, syncQuestions } from './data/bank'
+import { PACKS_ENABLED } from './lib/packs'
+import { getAppUserId, getOwnedThemes, refreshOwned } from './lib/purchases'
 import { buildDuels, buildRounds } from './game/deck'
 import { reducer, resumeState } from './game/engine'
 import type { Answer, GameConfig, GameState } from './game/types'
@@ -50,6 +52,14 @@ export default function App() {
     if (!isNative) return
     const sub = NativeApp.addListener('backButton', () => backRef.current())
     return () => void sub.then((h) => h.remove())
+  }, [])
+
+  // V1.1 : thèmes premium achetés → leurs questions (vérifiées côté serveur).
+  useEffect(() => {
+    if (!PACKS_ENABLED) return
+    void refreshOwned().then(async () => {
+      if (getOwnedThemes().length > 0) await syncPackQuestions(await getAppUserId())
+    })
   }, [])
 
   // Questions à jour depuis Supabase : au lancement, puis à chaque retour au premier plan.

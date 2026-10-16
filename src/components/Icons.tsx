@@ -16,6 +16,11 @@ import { Target } from '@phosphor-icons/react/dist/csr/Target'
 import { Timer } from '@phosphor-icons/react/dist/csr/Timer'
 import { Warning } from '@phosphor-icons/react/dist/csr/Warning'
 import { XCircle } from '@phosphor-icons/react/dist/csr/XCircle'
+import { SoccerBall } from '@phosphor-icons/react/dist/csr/SoccerBall'
+import { Football } from '@phosphor-icons/react/dist/csr/Football'
+import { FilmSlate } from '@phosphor-icons/react/dist/csr/FilmSlate'
+import { MusicNotes } from '@phosphor-icons/react/dist/csr/MusicNotes'
+import { PersonSimpleRun } from '@phosphor-icons/react/dist/csr/PersonSimpleRun'
 import type { Icon, IconWeight } from '@phosphor-icons/react'
 import type { RoundKind, Theme, Tier } from '../game/types'
 
@@ -30,6 +35,11 @@ export const THEME_ICONS: Record<Theme, Icon> = {
   constructions: Buildings,
   histoire: Scroll,
   insolite: Sparkle,
+  football: SoccerBall,
+  rugby: Football,
+  cinema: FilmSlate,
+  musique: MusicNotes,
+  jo: PersonSimpleRun,
 }
 
 export const ROUND_ICONS: Record<RoundKind, Icon> = {

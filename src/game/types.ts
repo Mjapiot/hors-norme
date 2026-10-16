@@ -1,12 +1,8 @@
-export type Theme =
-  | 'corps'
-  | 'animaux'
-  | 'geo'
-  | 'espace'
-  | 'sport'
-  | 'constructions'
-  | 'histoire'
-  | 'insolite'
+/** Thèmes gratuits (inclus dans le jeu). */
+export type FreeTheme = 'corps' | 'animaux' | 'geo' | 'espace' | 'sport' | 'constructions' | 'histoire' | 'insolite'
+/** Thèmes premium, vendus à l'unité ou en pack global (achats intégrés). */
+export type PaidTheme = 'football' | 'rugby' | 'cinema' | 'musique' | 'jo'
+export type Theme = FreeTheme | PaidTheme
 
 export const THEMES: Record<Theme, { label: string }> = {
   corps: { label: 'Corps humain' },
@@ -17,7 +13,16 @@ export const THEMES: Record<Theme, { label: string }> = {
   constructions: { label: 'Constructions' },
   histoire: { label: 'Histoire' },
   insolite: { label: 'Insolite' },
+  football: { label: 'Football' },
+  rugby: { label: 'Rugby' },
+  cinema: { label: 'Cinéma & séries' },
+  musique: { label: 'Musique' },
+  jo: { label: 'Jeux olympiques' },
 }
+
+export const FREE_THEMES: FreeTheme[] = ['corps', 'animaux', 'geo', 'espace', 'sport', 'constructions', 'histoire', 'insolite']
+export const PAID_THEMES: PaidTheme[] = ['football', 'rugby', 'cinema', 'musique', 'jo']
+export const isPaidTheme = (t: Theme): t is PaidTheme => (PAID_THEMES as Theme[]).includes(t)
 
 interface QuestionBase {
   id: string

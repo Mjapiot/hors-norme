@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import type { Question } from '../game/types'
 import { load, save } from '../lib/storage'
-import { fetchPublishedQuestions } from './remote'
+import { fetchPackQuestions, fetchPublishedQuestions } from './remote'
 // Base embarquée = dernière copie des questions publiées (npm run questions:pull).
 import SNAPSHOT from './snapshot.json'
 
@@ -29,8 +29,30 @@ let bank: Question[] = cached && cached.questions.length >= MIN_REMOTE_QUESTIONS
 let lastSync = cached?.syncedAt ?? 0
 const listeners = new Set<() => void>()
 
+// Questions des thèmes premium achetés (cache séparé, jouable hors ligne).
+const PACK_CACHE_KEY = 'hn:bank-packs:v1'
+let packBank: Question[] = load<Question[]>(PACK_CACHE_KEY, [])
+let combined: Question[] = [...bank, ...packBank]
+const recombine = () => {
+  combined = [...bank, ...packBank]
+  listeners.forEach((l) => l())
+}
+
 export function getQuestions(): Question[] {
-  return bank
+  return combined
+}
+
+/** Nombre de questions disponibles pour un thème premium (0 tant qu'il n'est pas téléchargé). */
+export const packQuestionCount = (theme: string) => packBank.filter((q) => q.theme === theme).length
+
+/** Télécharge les questions des thèmes achetés (après un achat, une restauration ou au démarrage). */
+export async function syncPackQuestions(appUserId: string | null): Promise<void> {
+  if (!appUserId) return
+  const res = await fetchPackQuestions(appUserId)
+  if (!res) return
+  packBank = res.questions
+  save(PACK_CACHE_KEY, packBank)
+  recombine()
 }
 
 export function bankSource(): 'remote' | 'embedded' {
@@ -55,6 +77,6 @@ export async function syncQuestions(force = false): Promise<boolean> {
   bank = remote
   lastSync = Date.now()
   save(CACHE_KEY, { syncedAt: lastSync, questions: remote } satisfies Cached)
-  listeners.forEach((l) => l())
+  recombine()
   return true
 }

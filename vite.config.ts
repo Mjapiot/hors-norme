@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => {
     'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
   )
   if (isSecretKey(supabaseKey)) throw new Error('Clé Supabase secrète détectée : utilise la clé anon / publishable.')
+  if (/^sk_/.test(pick(env, 'VITE_REVENUECAT_IOS_KEY', 'REVENUECAT_IOS_KEY'))) throw new Error('Clé RevenueCat secrète détectée : utilise la clé publique iOS (appl_…).')
   // `vite build --mode native` : version embarquée dans les apps iOS/Android (Capacitor).
   // Pas de service worker (les fichiers sont déjà dans l'app), pas d'analytics, pas de back-office.
   const native = mode === 'native'
@@ -45,6 +46,10 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_NATIVE': JSON.stringify(native),
       // Build de démo (captures des stores) : HN_DEMO=1 npm run build:native
       'import.meta.env.VITE_DEMO': JSON.stringify(process.env.HN_DEMO === '1'),
+      // V1.1 : thèmes premium (achats intégrés). PACKS=1 au build pour les activer.
+      'import.meta.env.VITE_PACKS': JSON.stringify(env.PACKS === '1'),
+      // Clé publique RevenueCat iOS (« appl_… », faite pour être embarquée dans l'app).
+      'import.meta.env.VITE_REVENUECAT_IOS_KEY': JSON.stringify(pick(env, 'VITE_REVENUECAT_IOS_KEY', 'REVENUECAT_IOS_KEY')),
     },
     plugins: [
       react(),

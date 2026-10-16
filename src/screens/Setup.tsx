@@ -3,6 +3,12 @@ import { ArrowLeft } from '@phosphor-icons/react/dist/csr/ArrowLeft'
 import { Question } from '@phosphor-icons/react/dist/csr/Question'
 import { Flag } from '@phosphor-icons/react/dist/csr/Flag'
 import { Plus } from '@phosphor-icons/react/dist/csr/Plus'
+import { LockSimple } from '@phosphor-icons/react/dist/csr/LockSimple'
+import { PackStore } from '../components/PackStore'
+import { packQuestionCount } from '../data/bank'
+import { PACKS_ENABLED, packForTheme } from '../lib/packs'
+import { useOwnedThemes } from '../lib/purchases'
+import type { PaidTheme } from '../game/types'
 import { CaretRight } from '@phosphor-icons/react/dist/csr/CaretRight'
 import { ListNumbers } from '@phosphor-icons/react/dist/csr/ListNumbers'
 import { User } from '@phosphor-icons/react/dist/csr/User'
@@ -11,11 +17,10 @@ import { X } from '@phosphor-icons/react/dist/csr/X'
 import { Ico, THEME_ICONS } from '../components/Icons'
 import { useQuestionBank } from '../data/bank'
 import { colorFor } from '../lib/format'
-import { THEMES } from '../game/types'
+import { FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
 import type { EndCondition, GameConfig, Theme } from '../game/types'
 
 const LIMITS = { teams: { min: 2, max: 6 }, players: { min: 2, max: 10 } }
-const ALL_THEMES = Object.keys(THEMES) as Theme[]
 
 const defaultName = (mode: GameConfig['mode'], i: number) => (mode === 'teams' ? `Équipe ${i + 1}` : `Joueur ${i + 1}`)
 const isDefaultName = (name: string) => /^(Équipe|Joueur) \d+$/.test(name.trim()) || name.trim() === ''
@@ -27,7 +32,7 @@ export const DEFAULT_CONFIG: GameConfig = {
   mode: 'teams',
   names: DEMO ? ['Les Pros', 'Team Pif', 'Les Rookies'] : ['Équipe 1', 'Équipe 2'],
   end: { type: 'rounds', count: 10 },
-  themes: ALL_THEMES,
+  themes: FREE_THEMES,
   bonus: true,
 }
 
@@ -56,6 +61,10 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
   const [step, setStep] = useState(0)
   const limits = LIMITS[cfg.mode]
   const questions = useQuestionBank()
+  const owned = useOwnedThemes()
+  const [store, setStore] = useState<{ focus: PaidTheme | null } | null>(null)
+  // Thèmes jouables : gratuits + premium achetés et téléchargés.
+  const playable: Theme[] = [...FREE_THEMES, ...owned.filter((t) => packQuestionCount(t) > 0)]
   const available = questions.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
   const needed = cfg.end.type === 'rounds' ? cfg.end.count : 14
 
@@ -75,7 +84,7 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
 
   const start = () => {
     const names = cfg.names.map((n, i) => n.trim().slice(0, 20) || defaultName(cfg.mode, i))
-    onStart({ ...cfg, names })
+    onStart({ ...cfg, names, themes: cfg.themes.filter((t) => playable.includes(t)) })
   }
 
   const back = () => (step === 0 ? onBack() : setStep(step - 1))
@@ -187,19 +196,49 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
       {step === 3 && (
         <section key="themes" className="step">
           <h3>
-            {cfg.themes.length}/{ALL_THEMES.length} thèmes sélectionnés
-            <button type="button" className="link" onClick={() => setCfg({ ...cfg, themes: cfg.themes.length === ALL_THEMES.length ? [] : ALL_THEMES })}>
-              {cfg.themes.length === ALL_THEMES.length ? 'Aucun' : 'Tous'}
+            {cfg.themes.filter((t) => playable.includes(t)).length}/{playable.length} thèmes sélectionnés
+            <button type="button" className="link" onClick={() => setCfg({ ...cfg, themes: cfg.themes.length >= playable.length ? [] : playable })}>
+              {cfg.themes.length >= playable.length ? 'Aucun' : 'Tous'}
             </button>
           </h3>
           <div className="chips">
-            {ALL_THEMES.map((t) => (
+            {FREE_THEMES.map((t) => (
               <button key={t} type="button" className={`chip${cfg.themes.includes(t) ? ' active' : ''}`} onClick={() => toggleTheme(t)}>
                 <Ico icon={THEME_ICONS[t]} size={17} />
                 {THEMES[t].label}
               </button>
             ))}
           </div>
+          {PACKS_ENABLED && (
+            <>
+              <h3>
+                Thèmes premium
+                <button type="button" className="link" onClick={() => setStore({ focus: null })}>
+                  Boutique
+                </button>
+              </h3>
+              <div className="chips">
+                {PAID_THEMES.map((t) => {
+                  const ready = owned.includes(t) && packQuestionCount(t) > 0
+                  if (ready) {
+                    return (
+                      <button key={t} type="button" className={`chip chip-premium${cfg.themes.includes(t) ? ' active' : ''}`} onClick={() => toggleTheme(t)}>
+                        <Ico icon={THEME_ICONS[t]} size={17} />
+                        {THEMES[t].label}
+                      </button>
+                    )
+                  }
+                  return (
+                    <button key={t} type="button" className="chip chip-locked" onClick={() => setStore({ focus: t })} aria-label={`${THEMES[t].label} : thème premium verrouillé`}>
+                      <Ico icon={LockSimple} size={15} weight="fill" />
+                      {THEMES[t].label}
+                      <small>{owned.includes(t) ? 'bientôt' : packForTheme(t).fallbackPrice}</small>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
           {cfg.themes.length > 0 && available < needed && (
             <p className="warning">Seulement {available} questions sur ces thèmes : la partie sera plus courte.</p>
           )}
@@ -220,6 +259,7 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
           </div>
         </section>
       )}
+      {store && <PackStore focus={store.focus} onClose={() => setStore(null)} />}
     </main>
   )
 }

@@ -68,3 +68,23 @@ export async function fetchPublishedQuestions(signal?: AbortSignal): Promise<Que
     return null
   }
 }
+
+/**
+ * Questions des thèmes premium achetés : la fonction Edge vérifie l'achat auprès de RevenueCat
+ * avant de les renvoyer (elles ne sont jamais lisibles avec la seule clé publique).
+ */
+export async function fetchPackQuestions(appUserId: string): Promise<{ themes: string[]; questions: Question[] } | null> {
+  if (!hasRemote) return null
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/pack-questions`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY!, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appUserId }),
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { themes: string[]; questions: QuestionRow[] }
+    return { themes: data.themes, questions: data.questions.map(rowToQuestion).filter((q): q is Question => q !== null) }
+  } catch {
+    return null
+  }
+}
