@@ -11,8 +11,8 @@ import { canPurchase, getAppUserId, getPrices, purchase, restore, useOwnedThemes
 import type { PurchaseOutcome } from '../lib/purchases'
 import { Ico, THEME_ICONS } from './Icons'
 
-/** Lien App Store, à renseigner une fois l'app publiée (id numérique App Store Connect). */
-export const APP_STORE_URL = ''
+/** Fiche App Store (identifiant Apple 6823666188) ; le lien fonctionne une fois l'app publiée. */
+export const APP_STORE_URL = 'https://apps.apple.com/app/id6823666188'
 
 interface Props {
   /** Thème touché dans la configuration (mis en avant), ou null. */

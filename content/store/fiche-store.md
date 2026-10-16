@@ -9,6 +9,7 @@ Visuels : `content/store/visuels/` (captures iPhone 6,9", Android, bannière, ic
 | --- | --- |
 | Nom | Hors Norme – Jeu des records |
 | Identifiant de l'app (bundle ID / package) | `app.horsnorme` |
+| Identifiant Apple (App Store Connect) | `6823666188` (UGS `horsnorme`) |
 | Éditeur | Maxence Japiot (particulier) |
 | E-mail de contact | maxoujapiot@gmail.com |
 | Site web | https://hors-norme.vercel.app |
