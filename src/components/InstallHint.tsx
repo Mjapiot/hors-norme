@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Export } from '@phosphor-icons/react/dist/csr/Export'
 import { Ico } from './Icons'
 import { KEYS, load, save } from '../lib/storage'
+import { isNative } from '../lib/native'
 
 function isIos(): boolean {
   const ua = navigator.userAgent
@@ -15,7 +16,8 @@ function isStandalone(): boolean {
 
 /** Safari iOS n'affiche pas d'invite d'installation : on explique le geste. */
 export function InstallHint() {
-  const [hidden, setHidden] = useState(() => load(KEYS.installHint, false) || !isIos() || isStandalone())
+  // Inutile dans l'app native (déjà installée) et hors iPhone.
+  const [hidden, setHidden] = useState(() => isNative || load(KEYS.installHint, false) || !isIos() || isStandalone())
   if (hidden) return null
   return (
     <div className="install-hint" role="note">

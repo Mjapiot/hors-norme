@@ -104,7 +104,8 @@ p {
   animation: enter 0.35s ease-out both;
 }
 
-.game .screen {
+/* Écran sous l'en-tête de jeu : l'en-tête porte déjà la marge de la Dynamic Island. */
+.game-topbar + .screen {
   min-height: calc(100dvh - 64px);
   padding-top: 8px;
 }
@@ -128,8 +129,9 @@ p {
   position: sticky;
   bottom: 0;
   margin-top: auto;
-  padding: 16px 0 calc(env(safe-area-inset-bottom) + 4px);
-  background: linear-gradient(transparent, var(--bg) 40%);
+  margin-inline: calc(-1 * (env(safe-area-inset-left) + var(--gutter))) calc(-1 * (env(safe-area-inset-right) + var(--gutter)));
+  padding: 16px calc(env(safe-area-inset-right) + var(--gutter)) calc(env(safe-area-inset-bottom) + 4px) calc(env(safe-area-inset-left) + var(--gutter));
+  background: linear-gradient(rgba(18, 13, 38, 0), rgba(18, 13, 38, 0.92) 45%);
 }
 
 .topbar {
@@ -546,6 +548,18 @@ p {
 
 .input {
   gap: 14px;
+}
+
+/* Sur les grands écrans, le pavé descend sous le pouce ; la question reste en haut. */
+.input .timer,
+.input .numpad,
+.input .hl,
+.input .ranking {
+  margin-top: auto;
+}
+
+.input .timer + .numpad {
+  margin-top: 0;
 }
 
 .input-who {
@@ -1496,7 +1510,7 @@ p {
   flex: 0 0 100%;
   scroll-snap-align: center;
   overflow-y: auto;
-  padding: 8px var(--gutter) 16px;
+  padding: 8px calc(env(safe-area-inset-right) + var(--gutter)) 16px calc(env(safe-area-inset-left) + var(--gutter));
 }
 
 .tuto-card {
