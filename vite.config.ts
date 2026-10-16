@@ -34,15 +34,19 @@ export default defineConfig(({ mode }) => {
     'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
   )
   if (isSecretKey(supabaseKey)) throw new Error('Clé Supabase secrète détectée : utilise la clé anon / publishable.')
+  // `vite build --mode native` : version embarquée dans les apps iOS/Android (Capacitor).
+  // Pas de service worker (les fichiers sont déjà dans l'app), pas d'analytics, pas de back-office.
+  const native = mode === 'native'
 
   return {
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseKey),
+      'import.meta.env.VITE_NATIVE': JSON.stringify(native),
     },
     plugins: [
       react(),
-      VitePWA({
+      !native && VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png'],
         manifest: {

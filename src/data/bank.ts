@@ -1,12 +1,15 @@
 import { useSyncExternalStore } from 'react'
 import type { Question } from '../game/types'
 import { load, save } from '../lib/storage'
-import { QUESTIONS } from './questions'
 import { fetchPublishedQuestions } from './remote'
+// Base embarquée = dernière copie des questions publiées (npm run questions:pull).
+import SNAPSHOT from './snapshot.json'
+
+const EMBEDDED = SNAPSHOT as Question[]
 
 /*
  * Banque de questions « hors connexion d'abord » :
- *   1. au démarrage : dernière copie synchronisée, sinon la base embarquée dans l'app ;
+ *   1. au démarrage : dernière copie synchronisée, sinon la base embarquée dans l'app (snapshot.json) ;
  *   2. en ligne : on récupère les questions publiées (au plus une fois par heure) et on les garde en cache.
  * Une correction faite dans le back-office arrive donc chez les joueurs sans republier l'app.
  */
@@ -22,7 +25,7 @@ interface Cached {
 }
 
 const cached = load<Cached | null>(CACHE_KEY, null)
-let bank: Question[] = cached && cached.questions.length >= MIN_REMOTE_QUESTIONS ? cached.questions : QUESTIONS
+let bank: Question[] = cached && cached.questions.length >= MIN_REMOTE_QUESTIONS ? cached.questions : EMBEDDED
 let lastSync = cached?.syncedAt ?? 0
 const listeners = new Set<() => void>()
 
@@ -31,7 +34,7 @@ export function getQuestions(): Question[] {
 }
 
 export function bankSource(): 'remote' | 'embedded' {
-  return bank === QUESTIONS ? 'embedded' : 'remote'
+  return bank === EMBEDDED ? 'embedded' : 'remote'
 }
 
 function subscribe(listener: () => void) {

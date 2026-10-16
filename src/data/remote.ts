@@ -6,8 +6,11 @@ import type { Question, Theme } from '../game/types'
  * des packs publiés et gratuits.
  */
 
-export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
-export const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+// import.meta.env n'existe que sous Vite : ce module est aussi utilisé par des scripts Node (questions:pull).
+// Les expressions exactes `import.meta.env.VITE_…` doivent rester telles quelles : vite.config.ts les remplace au build.
+const underVite = typeof import.meta.env !== 'undefined'
+export const SUPABASE_URL: string | undefined = underVite ? import.meta.env.VITE_SUPABASE_URL : undefined
+export const SUPABASE_KEY: string | undefined = underVite ? import.meta.env.VITE_SUPABASE_ANON_KEY : undefined
 export const hasRemote = Boolean(SUPABASE_URL && SUPABASE_KEY)
 
 /** Ligne de la table public.questions (colonnes utiles au jeu). */

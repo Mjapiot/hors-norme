@@ -1,3 +1,4 @@
+import { haptic } from './haptics'
 import { KEYS, load, save } from './storage'
 
 /*
@@ -65,6 +66,7 @@ const SOUNDS: Record<Sfx, Note[]> = {
 }
 
 export function play(sfx: Sfx): void {
+  haptic(sfx)
   if (!enabled) return
   unlockAudio()
   if (!ctx) return

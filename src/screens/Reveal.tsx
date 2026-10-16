@@ -4,11 +4,14 @@ import { Lightning } from '@phosphor-icons/react/dist/csr/Lightning'
 import { Medal } from '@phosphor-icons/react/dist/csr/Medal'
 import { Sword } from '@phosphor-icons/react/dist/csr/Sword'
 import { Trophy } from '@phosphor-icons/react/dist/csr/Trophy'
+import { Export } from '@phosphor-icons/react/dist/csr/Export'
 import { Ico, TIER_ICONS } from '../components/Icons'
 import { colorFor, formatNumber, frenchSpacing } from '../lib/format'
 import { isAdmin } from '../lib/admin'
 import { celebrate } from '../lib/celebrate'
 import { play } from '../lib/sound'
+import { shareResults } from '../lib/shareResults'
+import { onGameFinished } from '../lib/review'
 import { correctRanking } from '../game/scoring'
 import { isOver, standings } from '../game/engine'
 import type { Answer, Breakdown, GameState, NumberQuestion, Round } from '../game/types'
@@ -257,6 +260,12 @@ export function EndScreen({ state, onReplay, onHome }: { state: GameState; onRep
   const podium = ranking.slice(0, 3)
   const winners = ranking.filter((r) => r.rank === 1).map((r) => state.config.names[r.index])
 
+  const [sharing, setSharing] = useState(false)
+  // Une partie terminée (une seule fois par podium) : sert à proposer de noter l'app au bon moment.
+  useEffect(() => {
+    onGameFinished()
+  }, [])
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       play('win')
@@ -300,6 +309,18 @@ export function EndScreen({ state, onReplay, onHome }: { state: GameState; onRep
       <div className="stack">
         <button type="button" className="btn btn-primary" onClick={onReplay}>
           Revanche !
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost btn-icon"
+          disabled={sharing}
+          onClick={async () => {
+            setSharing(true)
+            await shareResults(state)
+            setSharing(false)
+          }}
+        >
+          <Ico icon={Export} size={20} /> Partager les résultats
         </button>
         <button type="button" className="btn btn-ghost" onClick={onHome}>
           Accueil

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useReducer, useState } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { App as NativeApp } from '@capacitor/app'
+import { isNative } from './lib/native'
 import { getQuestions, syncQuestions } from './data/bank'
 import { buildDuels, buildRounds } from './game/deck'
 import { reducer, resumeState } from './game/engine'
@@ -31,6 +33,24 @@ export default function App() {
     if (game && game.phase !== 'end') save(KEYS.game, game)
     else remove(KEYS.game)
   }, [game])
+
+  // Bouton « retour » Android : jamais de sortie de l'app en pleine partie.
+  const backRef = useRef<() => void>(() => undefined)
+  useEffect(() => {
+    backRef.current = () => {
+      if (tutorial) closeHelp()
+      else if (screen === 'setup') setScreen('home')
+      else if (screen === 'game' && game && game.phase !== 'end') {
+        if (window.confirm('Quitter la partie en cours ? Elle sera gardée pour plus tard.')) setScreen('home')
+      } else if (screen === 'game') setScreen('home')
+      else void NativeApp.exitApp()
+    }
+  })
+  useEffect(() => {
+    if (!isNative) return
+    const sub = NativeApp.addListener('backButton', () => backRef.current())
+    return () => void sub.then((h) => h.remove())
+  }, [])
 
   // Questions à jour depuis Supabase : au lancement, puis à chaque retour au premier plan.
   useEffect(() => {

@@ -27,10 +27,7 @@ export function NumPad({ value, onKey, unit, year = false }: Props) {
             className={`key${k === '⌫' ? ' key-muted' : ''}`}
             disabled={k === ',' && year}
             aria-label={k === '⌫' ? 'Effacer' : k === ',' ? 'Virgule' : k}
-            onClick={() => {
-              navigator.vibrate?.(8)
-              onKey(k)
-            }}
+            onClick={() => onKey(k)}
           >
             {k === '⌫' ? <Ico icon={Backspace} size={28} /> : k}
           </button>

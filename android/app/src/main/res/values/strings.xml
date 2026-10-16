@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Hors Norme</string>
+    <string name="title_activity_main">Hors Norme</string>
+    <string name="package_name">app.horsnorme</string>
+    <string name="custom_url_scheme">app.horsnorme</string>
+</resources>
