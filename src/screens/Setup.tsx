@@ -20,9 +20,12 @@ const ALL_THEMES = Object.keys(THEMES) as Theme[]
 const defaultName = (mode: GameConfig['mode'], i: number) => (mode === 'teams' ? `Équipe ${i + 1}` : `Joueur ${i + 1}`)
 const isDefaultName = (name: string) => /^(Équipe|Joueur) \d+$/.test(name.trim()) || name.trim() === ''
 
+// Build de démo (captures des stores) : équipes aux noms réalistes.
+const DEMO = import.meta.env.VITE_DEMO === true
+
 export const DEFAULT_CONFIG: GameConfig = {
   mode: 'teams',
-  names: ['Équipe 1', 'Équipe 2'],
+  names: DEMO ? ['Les Pros', 'Team Pif', 'Les Rookies'] : ['Équipe 1', 'Équipe 2'],
   end: { type: 'rounds', count: 10 },
   themes: ALL_THEMES,
   bonus: true,

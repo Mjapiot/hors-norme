@@ -130,7 +130,9 @@ p {
   bottom: 0;
   margin-top: auto;
   margin-inline: calc(-1 * (env(safe-area-inset-left) + var(--gutter))) calc(-1 * (env(safe-area-inset-right) + var(--gutter)));
-  padding: 16px calc(env(safe-area-inset-right) + var(--gutter)) calc(env(safe-area-inset-bottom) + 4px) calc(env(safe-area-inset-left) + var(--gutter));
+  /* Le fond descend jusqu'au bas de l'écran (on absorbe la marge basse de .screen), le bouton ne bouge pas. */
+  margin-bottom: calc(-1 * (env(safe-area-inset-bottom) + 24px));
+  padding: 16px calc(env(safe-area-inset-right) + var(--gutter)) calc(env(safe-area-inset-bottom) + 28px) calc(env(safe-area-inset-left) + var(--gutter));
   background: linear-gradient(rgba(18, 13, 38, 0), rgba(18, 13, 38, 0.92) 45%);
 }
 
@@ -2039,4 +2041,17 @@ p {
   text-align: center;
   color: var(--muted);
   font-size: 14px;
+}
+
+.legal-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 13px;
+}
+
+.legal-links a {
+  color: var(--muted);
+  text-decoration: none;
 }

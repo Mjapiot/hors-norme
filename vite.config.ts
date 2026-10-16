@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseKey),
       'import.meta.env.VITE_NATIVE': JSON.stringify(native),
+      // Build de démo (captures des stores) : HN_DEMO=1 npm run build:native
+      'import.meta.env.VITE_DEMO': JSON.stringify(process.env.HN_DEMO === '1'),
     },
     plugins: [
       react(),
@@ -73,6 +75,8 @@ export default defineConfig(({ mode }) => {
           // Police : on ne précache que les sous-ensembles latins.
           globIgnores: ['**/*vietnamese*'],
           navigateFallback: '/index.html',
+          // Pages légales statiques : jamais remplacées par l'app.
+          navigateFallbackDenylist: [/^\/(confidentialite|support|mentions-legales)/],
         },
       }),
     ],

@@ -4,6 +4,9 @@ import { InstallHint } from '../components/InstallHint'
 import { bankSource, useQuestionBank } from '../data/bank'
 import { isAdmin } from '../lib/admin'
 
+/** Pages légales hébergées sur le site (ouvertes dans le navigateur depuis l'app native). */
+const SITE = 'https://hors-norme.vercel.app'
+
 interface Props {
   canResume: boolean
   onHelp: () => void
@@ -41,6 +44,12 @@ export function Home({ canResume, onNew, onResume, onHelp }: Props) {
       <button type="button" className="btn btn-ghost btn-icon" onClick={onHelp}>
         <Ico icon={Question} size={22} /> Comment on joue&nbsp;?
       </button>
+
+      <nav className="legal-links" aria-label="Informations">
+        <a href={`${SITE}/support`} target="_blank" rel="noreferrer">Aide</a>
+        <a href={`${SITE}/confidentialite`} target="_blank" rel="noreferrer">Confidentialité</a>
+        <a href={`${SITE}/mentions-legales`} target="_blank" rel="noreferrer">Mentions légales</a>
+      </nav>
 
       <p className="footnote">
         {questions.length} questions
