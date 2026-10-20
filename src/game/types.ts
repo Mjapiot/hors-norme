@@ -24,8 +24,6 @@ export const THEMES: Record<Theme, { label: string }> = {
 export const FREE_THEMES: FreeTheme[] = ['corps', 'animaux', 'geo', 'espace', 'sport', 'constructions', 'histoire', 'insolite', 'amour']
 /** Thèmes cochés par défaut : tous les thèmes gratuits. */
 export const DEFAULT_THEMES: FreeTheme[] = FREE_THEMES
-/** Thèmes gratuits ajoutés après la V1.0 : cochés d'office chez ceux qui jouaient avec tous les thèmes. */
-export const NEW_FREE_THEMES: FreeTheme[] = ['amour']
 export const PAID_THEMES: PaidTheme[] = ['football', 'rugby', 'cinema', 'musique', 'jo']
 export const isPaidTheme = (t: Theme): t is PaidTheme => (PAID_THEMES as Theme[]).includes(t)
 

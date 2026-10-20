@@ -18,7 +18,7 @@ import { Ico, THEME_ICONS } from '../components/Icons'
 import { useQuestionBank } from '../data/bank'
 import { colorFor } from '../lib/format'
 import { KEYS, load } from '../lib/storage'
-import { DEFAULT_THEMES, FREE_THEMES, NEW_FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
+import { DEFAULT_THEMES, FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
 import type { EndCondition, GameConfig, Theme } from '../game/types'
 
 const LIMITS = { teams: { min: 2, max: 6 }, players: { min: 2, max: 10 } }
@@ -47,7 +47,7 @@ const END_OPTIONS: { label: string; hint: string; value: EndCondition }[] = [
 
 const sameEnd = (a: EndCondition, b: EndCondition) => JSON.stringify(a) === JSON.stringify(b)
 
-/** Dernière configuration enregistrée, vérifiée champ par champ (sinon la configuration par défaut). */
+/** Dernière configuration enregistrée (mode, noms, fin de partie, bonus), vérifiée champ par champ. */
 export function loadConfig(): GameConfig {
   const raw = load<Partial<GameConfig> | null>(KEYS.config, null)
   if (!raw || typeof raw !== 'object') return DEFAULT_CONFIG
@@ -55,15 +55,12 @@ export function loadConfig(): GameConfig {
   const { min, max } = LIMITS[mode]
   const names = Array.isArray(raw.names) && raw.names.every((n) => typeof n === 'string') ? raw.names.slice(0, max) : DEFAULT_CONFIG.names
   const end = END_OPTIONS.find((o) => raw.end && sameEnd(o.value, raw.end))?.value ?? DEFAULT_CONFIG.end
-  let themes = Array.isArray(raw.themes) ? raw.themes.filter((t): t is Theme => t in THEMES) : DEFAULT_CONFIG.themes
-  // Joueur qui avait coché tous les thèmes de l'époque : les nouveaux thèmes gratuits s'ajoutent d'office.
-  const older = FREE_THEMES.filter((t) => !NEW_FREE_THEMES.includes(t))
-  if (older.every((t) => themes.includes(t))) themes = [...new Set([...themes, ...NEW_FREE_THEMES])]
   return {
     mode,
     names: names.length >= min ? names : [...names, ...Array.from({ length: min - names.length }, (_, i) => defaultName(mode, names.length + i))],
     end,
-    themes: themes.length > 0 ? themes : DEFAULT_CONFIG.themes,
+    // Chaque nouvelle partie démarre avec tous les thèmes cochés (la revanche, elle, garde ceux de la partie).
+    themes: DEFAULT_CONFIG.themes,
     bonus: typeof raw.bonus === 'boolean' ? raw.bonus : true,
   }
 }
