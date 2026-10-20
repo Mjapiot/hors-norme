@@ -2418,3 +2418,63 @@ p {
   font-size: 13px;
   color: var(--muted);
 }
+
+/* Thèmes premium annoncés (avant l'ouverture de la boutique) : visibles, non jouables. */
+.soon-tag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.soon-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.soon-card {
+  width: 100%;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 2px dashed var(--line);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+}
+
+.soon-card strong {
+  display: block;
+  color: var(--text);
+  opacity: 0.75;
+  font-size: 16px;
+}
+
+.soon-card small {
+  display: block;
+  font-size: 13px;
+}
+
+.soon-card.active {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.soon-lock {
+  opacity: 0.6;
+}
+
+.soon-note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--accent);
+  text-align: center;
+}

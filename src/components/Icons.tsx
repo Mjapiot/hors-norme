@@ -4,6 +4,7 @@ import { Buildings } from '@phosphor-icons/react/dist/csr/Buildings'
 import { CheckCircle } from '@phosphor-icons/react/dist/csr/CheckCircle'
 import { Fire } from '@phosphor-icons/react/dist/csr/Fire'
 import { GlobeHemisphereWest } from '@phosphor-icons/react/dist/csr/GlobeHemisphereWest'
+import { Heart } from '@phosphor-icons/react/dist/csr/Heart'
 import { ListNumbers } from '@phosphor-icons/react/dist/csr/ListNumbers'
 import { MinusCircle } from '@phosphor-icons/react/dist/csr/MinusCircle'
 import { PawPrint } from '@phosphor-icons/react/dist/csr/PawPrint'
@@ -36,6 +37,7 @@ export const THEME_ICONS: Record<Theme, Icon> = {
   constructions: Buildings,
   histoire: Scroll,
   insolite: Sparkle,
+  amour: Heart,
   football: SoccerBall,
   rugby: Football,
   cinema: FilmSlate,

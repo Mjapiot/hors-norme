@@ -1,5 +1,5 @@
 /** Thèmes gratuits (inclus dans le jeu). */
-export type FreeTheme = 'corps' | 'animaux' | 'geo' | 'espace' | 'sport' | 'constructions' | 'histoire' | 'insolite'
+export type FreeTheme = 'corps' | 'animaux' | 'geo' | 'espace' | 'sport' | 'constructions' | 'histoire' | 'insolite' | 'amour'
 /** Thèmes premium, vendus à l'unité ou en pack global (achats intégrés). */
 export type PaidTheme = 'football' | 'rugby' | 'cinema' | 'musique' | 'jo'
 export type Theme = FreeTheme | PaidTheme
@@ -13,6 +13,7 @@ export const THEMES: Record<Theme, { label: string }> = {
   constructions: { label: 'Constructions' },
   histoire: { label: 'Histoire' },
   insolite: { label: 'Insolite' },
+  amour: { label: 'Amour & séduction' },
   football: { label: 'Football' },
   rugby: { label: 'Rugby' },
   cinema: { label: 'Cinéma & séries' },
@@ -20,7 +21,9 @@ export const THEMES: Record<Theme, { label: string }> = {
   jo: { label: 'Jeux olympiques' },
 }
 
-export const FREE_THEMES: FreeTheme[] = ['corps', 'animaux', 'geo', 'espace', 'sport', 'constructions', 'histoire', 'insolite']
+export const FREE_THEMES: FreeTheme[] = ['corps', 'animaux', 'geo', 'espace', 'sport', 'constructions', 'histoire', 'insolite', 'amour']
+/** Thèmes cochés par défaut (« Amour & séduction » se choisit volontairement). */
+export const DEFAULT_THEMES: FreeTheme[] = FREE_THEMES.filter((t) => t !== 'amour')
 export const PAID_THEMES: PaidTheme[] = ['football', 'rugby', 'cinema', 'musique', 'jo']
 export const isPaidTheme = (t: Theme): t is PaidTheme => (PAID_THEMES as Theme[]).includes(t)
 

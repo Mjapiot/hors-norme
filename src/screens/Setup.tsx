@@ -6,7 +6,7 @@ import { Plus } from '@phosphor-icons/react/dist/csr/Plus'
 import { LockSimple } from '@phosphor-icons/react/dist/csr/LockSimple'
 import { PackStore } from '../components/PackStore'
 import { packQuestionCount } from '../data/bank'
-import { PACKS_ENABLED, packForTheme } from '../lib/packs'
+import { PACKS, PACKS_ENABLED, packForTheme } from '../lib/packs'
 import { useOwnedThemes } from '../lib/purchases'
 import type { PaidTheme } from '../game/types'
 import { CaretRight } from '@phosphor-icons/react/dist/csr/CaretRight'
@@ -18,7 +18,7 @@ import { Ico, THEME_ICONS } from '../components/Icons'
 import { useQuestionBank } from '../data/bank'
 import { colorFor } from '../lib/format'
 import { KEYS, load } from '../lib/storage'
-import { FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
+import { DEFAULT_THEMES, FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
 import type { EndCondition, GameConfig, Theme } from '../game/types'
 
 const LIMITS = { teams: { min: 2, max: 6 }, players: { min: 2, max: 10 } }
@@ -33,7 +33,7 @@ export const DEFAULT_CONFIG: GameConfig = {
   mode: 'teams',
   names: DEMO ? ['Les Pros', 'Team Pif', 'Les Rookies'] : ['Équipe 1', 'Équipe 2'],
   end: { type: 'rounds', count: 10 },
-  themes: FREE_THEMES,
+  themes: DEFAULT_THEMES,
   bonus: true,
 }
 
@@ -84,6 +84,7 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
   const owned = useOwnedThemes()
   const [store, setStore] = useState<{ focus: PaidTheme | null } | null>(null)
   const [startError, setStartError] = useState(false)
+  const [teaser, setTeaser] = useState<PaidTheme | null>(null)
   // Thèmes jouables : gratuits + premium achetés et téléchargés.
   const playable: Theme[] = [...FREE_THEMES, ...owned.filter((t) => packQuestionCount(t) > 0)]
   const available = questions.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
@@ -259,6 +260,33 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
                   )
                 })}
               </div>
+            </>
+          )}
+          {!PACKS_ENABLED && (
+            <>
+              <h3>
+                Thèmes premium
+                <span className="soon-tag">Bientôt</span>
+              </h3>
+              <ul className="soon-list">
+                {PACKS.map((p) => (
+                  <li key={p.theme}>
+                    <button type="button" className={`soon-card${teaser === p.theme ? ' active' : ''}`} onClick={() => setTeaser(p.theme)} aria-label={`${THEMES[p.theme].label} : bientôt disponible`}>
+                      <Ico icon={THEME_ICONS[p.theme]} size={22} />
+                      <span>
+                        <strong>{THEMES[p.theme].label}</strong>
+                        <small>{p.pitch}</small>
+                      </span>
+                      <Ico icon={LockSimple} size={16} weight="fill" className="soon-lock" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {teaser && (
+                <p className="soon-note" role="status">
+                  {THEMES[teaser].label} arrive dans une prochaine mise à jour de Hors Norme.
+                </p>
+              )}
             </>
           )}
           {cfg.themes.length > 0 && available < needed && <p className="warning">Peu de questions sur ces thèmes&nbsp;: la partie risque d’être plus courte.</p>}
