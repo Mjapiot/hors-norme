@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react'
 import type { Question } from '../game/types'
 import { load, save } from '../lib/storage'
-import { fetchPackQuestions, fetchPublishedQuestions } from './remote'
+import { fetchPackQuestions, fetchPublishedQuestions, rowToQuestion } from './remote'
+import type { QuestionRow } from './remote'
 // Base embarquée = dernière copie des questions publiées (npm run questions:pull).
 import SNAPSHOT from './snapshot.json'
 
@@ -24,14 +25,21 @@ interface Cached {
   questions: Question[]
 }
 
-const cached = load<Cached | null>(CACHE_KEY, null)
-let bank: Question[] = cached && cached.questions.length >= MIN_REMOTE_QUESTIONS ? cached.questions : EMBEDDED
-let lastSync = cached?.syncedAt ?? 0
+/** Relit un cache local (qui peut être abîmé ou venir d'une ancienne version) : seules les questions valides restent. */
+function sanitize(list: unknown): Question[] {
+  if (!Array.isArray(list)) return []
+  return list.flatMap((q) => (q && typeof q === 'object' ? (rowToQuestion(q as QuestionRow) ?? []) : []))
+}
+
+const cachedRaw = load<Partial<Cached> | null>(CACHE_KEY, null)
+const cachedQuestions = sanitize(cachedRaw?.questions)
+let bank: Question[] = cachedQuestions.length >= MIN_REMOTE_QUESTIONS ? cachedQuestions : EMBEDDED
+let lastSync = cachedQuestions.length >= MIN_REMOTE_QUESTIONS && typeof cachedRaw?.syncedAt === 'number' ? cachedRaw.syncedAt : 0
 const listeners = new Set<() => void>()
 
 // Questions des thèmes premium achetés (cache séparé, jouable hors ligne).
 const PACK_CACHE_KEY = 'hn:bank-packs:v1'
-let packBank: Question[] = load<Question[]>(PACK_CACHE_KEY, [])
+let packBank: Question[] = sanitize(load<unknown>(PACK_CACHE_KEY, []))
 let combined: Question[] = [...bank, ...packBank]
 const recombine = () => {
   combined = [...bank, ...packBank]

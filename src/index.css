@@ -656,7 +656,17 @@ p {
   inset: 0;
   background: var(--team, var(--accent));
   transform-origin: left;
-  transition: transform 0.2s linear;
+  transform: scaleX(var(--from, 1));
+  animation: timer-drain linear forwards;
+}
+
+@keyframes timer-drain {
+  from {
+    transform: scaleX(var(--from, 1));
+  }
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .timer-text {
@@ -671,6 +681,10 @@ p {
 
 .timer-urgent .timer-bar {
   background: var(--bad);
+  transition: background 0.3s;
+}
+
+.timer-urgent {
   animation: pulse 0.5s ease-in-out infinite alternate;
 }
 
@@ -898,7 +912,6 @@ p {
 }
 
 .results-answer {
-  grid-area: meta;
   color: var(--muted);
   font-size: 15px;
   font-variant-numeric: tabular-nums;
@@ -908,16 +921,24 @@ p {
   display: none;
 }
 
-.results-note {
+.results-meta {
   grid-area: meta;
-  justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 10px;
+  min-width: 0;
+}
+
+.results-note {
   font-size: 14px;
   color: var(--muted);
   padding-right: 4px;
 }
 
-.results li:has(.results-answer:empty) .results-note {
-  justify-self: start;
+.results li:has(.results-answer:empty) .results-meta {
+  justify-content: flex-start;
 }
 
 .results-points {
@@ -1101,6 +1122,11 @@ p {
     animation-duration: 0.01ms !important;
     animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Le chrono reste lisible : barre figée, le texte donne les secondes. */
+  .timer-bar {
+    animation: none !important;
   }
 }
 
@@ -2244,4 +2270,151 @@ p {
   text-align: center;
   color: var(--muted);
   font-size: 12px;
+}
+
+/* ───────── V1.1 : Fourchette, duel éclair, pause, révélation accélérée ───────── */
+
+.badge-range {
+  background: #4da8ff;
+  color: #081a33;
+}
+
+.handoff-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--good) 16%, transparent);
+  color: var(--good);
+  font-weight: 700;
+  font-size: 15px;
+  animation: enter 0.25s ease-out both;
+}
+
+.away {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  color: var(--team);
+}
+
+.away-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.range-fields {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.range-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 96px;
+  padding: 10px 8px;
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  border: 2px solid transparent;
+  color: inherit;
+  overflow: hidden;
+}
+
+.range-field.active {
+  border-color: color-mix(in srgb, var(--team) 70%, transparent);
+}
+
+.range-field small {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.range-field .numpad-value {
+  font-size: clamp(24px, 7.5vw, 34px);
+}
+
+.range-field em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* Révélation accélérée (un tap) : tout s'affiche d'un coup. */
+.reveal.fast *,
+.reveal.fast *::before,
+.reveal.fast *::after {
+  animation-delay: 0s !important;
+  animation-duration: 0.12s !important;
+}
+
+/* Bouton visible mais en attente de la fin de la révélation (un tap l'accélère). */
+.btn-waiting {
+  opacity: 0.55;
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(8, 5, 20, 0.7);
+  animation: enter 0.2s ease-out both;
+}
+
+.sheet-panel {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px calc(env(safe-area-inset-right) + var(--gutter)) calc(env(safe-area-inset-bottom) + 20px) calc(env(safe-area-inset-left) + var(--gutter));
+  border-radius: 28px 28px 0 0;
+  background: radial-gradient(120% 40% at 50% 0%, #3a2380 0%, transparent 70%), var(--bg-2);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.sheet-panel h2 {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.sheet-danger {
+  align-self: center;
+  color: var(--bad);
+  min-height: 44px;
+}
+
+.btn-danger {
+  background: var(--bad);
+  color: #1a0d0d;
+}
+
+.oops {
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.tier-notes {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--muted);
 }

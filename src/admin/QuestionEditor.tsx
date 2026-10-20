@@ -1,11 +1,19 @@
 import { useState } from 'react'
-import { THEMES } from '../game/types'
-import type { Theme } from '../game/types'
+import { THEMES, TOLERANCES } from '../game/types'
+import type { Theme, Tolerance } from '../game/types'
+import { toleranceOf } from '../game/scoring'
 import { markVerified, STATUS_LABELS, validate } from './model'
 import type { AdminQuestion, Status } from './model'
 
 const ALL_THEMES = Object.keys(THEMES) as Theme[]
 const EMPTY_ITEMS = [0, 1, 2, 3].map(() => ({ label: '', value: 0 }))
+const TOLERANCE_LABELS: Record<Tolerance, string> = {
+  relative: 'quantité : 5 % / 20 %',
+  tight: 'record serré : 0,5 % / 2 %',
+  years: 'année : 5 / 20 ans',
+  age: 'âge : 1 / 3 ans',
+  degrees: 'degrés : 1 / 3 °C',
+}
 
 interface Props {
   question: AdminQuestion
@@ -122,6 +130,17 @@ export function QuestionEditor({ question, isNew, onSave, onDelete, onClose }: P
             </label>
             <label className="admin-check">
               <input type="checkbox" checked={q.year} onChange={(e) => set('year', e.target.checked)} /> La réponse est une année
+            </label>
+            <label>
+              Tolérance
+              <select value={q.tolerance ?? ''} onChange={(e) => set('tolerance', (e.target.value || null) as Tolerance | null)}>
+                <option value="">Automatique ({TOLERANCE_LABELS[toleranceOf({ tolerance: undefined, year: q.year, unit: q.unit, answer: q.answer ?? 0 })]})</option>
+                {TOLERANCES.map((t) => (
+                  <option key={t} value={t}>
+                    {TOLERANCE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
         ) : (

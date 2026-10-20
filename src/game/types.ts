@@ -40,11 +40,22 @@ interface QuestionBase {
   subject?: string
 }
 
+/**
+ * Façon de juger l'écart d'une réponse :
+ *  - relative : en % (quantités : km, kg, habitants…) ;
+ *  - tight : en %, mais très strict (records serrés : sprints, sauts, lancers) ;
+ *  - years / age / degrees : en unités (années, années d'âge, degrés Celsius).
+ */
+export type Tolerance = 'relative' | 'tight' | 'years' | 'age' | 'degrees'
+export const TOLERANCES: Tolerance[] = ['relative', 'tight', 'years', 'age', 'degrees']
+
 export interface NumberQuestion extends QuestionBase {
   type: 'number'
   answer: number
   /** Réponse = une année : l'écart se juge en années, pas en %. */
   year?: boolean
+  /** Réglage explicite (back-office) ; sinon déduit de la question (voir toleranceOf). */
+  tolerance?: Tolerance
 }
 
 export interface RankingQuestion extends QuestionBase {
@@ -61,6 +72,8 @@ export type Round =
   | { kind: 'higherlower'; question: NumberQuestion; threshold: number }
   /** order = indices des items dans l'ordre d'affichage (mélangé). */
   | { kind: 'ranking'; question: RankingQuestion; order: number[] }
+  /** Fourchette : chacun donne un minimum et un maximum. */
+  | { kind: 'range'; question: NumberQuestion }
 
 export type RoundKind = Round['kind']
 
@@ -69,16 +82,18 @@ export const ROUND_LABELS: Record<RoundKind, string> = {
   chrono: 'Bonus · Chrono 30 s',
   higherlower: 'Bonus · Plus ou moins',
   ranking: 'Bonus · Classement express',
+  range: 'Bonus · Fourchette',
 }
 
-/** Question de départage : plus ou moins d'un seuil, sur l'écran partagé. */
-export type DuelQuestion = { question: NumberQuestion; threshold: number }
+/** Question de départage : estimation éclair, chaque ex æquo à tour de rôle. */
+export type DuelQuestion = { question: NumberQuestion }
 
 export type Answer =
   | { kind: 'number'; value: number | null }
   /** Indices des items, du plus petit au plus grand selon le joueur. */
   | { kind: 'ranking'; order: number[] }
   | { kind: 'higherlower'; choice: 'plus' | 'moins' | null }
+  | { kind: 'range'; min: number | null; max: number | null }
 
 export type EndCondition = { type: 'rounds'; count: 5 | 10 } | { type: 'target'; points: 8 | 12 | 15 }
 
@@ -105,13 +120,18 @@ export interface Breakdown {
 export interface RoundResult {
   /** Total de la manche par participant, multiplicateur inclus. */
   points: number[]
+  /** Points réellement ajoutés au score (le score ne descend jamais sous zéro : un malus peut être absorbé). */
+  applied?: number[]
   breakdown: Breakdown[]
   /** Écart affiché (« à 12 % », « 2/4 bien placés »…). */
   labels: string[]
   tiers: Tier[]
   multiplier: 1 | 2
-  /** Égalité parfaite pour le point de la manche : départage au duel de rapidité. */
-  duel: { tied: number[]; winner: number | null; resolved: boolean } | null
+  /**
+   * Égalité parfaite pour le point de la manche : départage par une estimation éclair.
+   * winners = gagnants du duel (plusieurs si nouvelle égalité : ils se partagent le point).
+   */
+  duel: { tied: number[]; winners: number[]; guesses: (number | null)[]; resolved: boolean } | null
 }
 
 /** allin = toutes les réponses sont saisies, on attend la révélation (dernière chance de corriger). */
@@ -130,4 +150,6 @@ export interface GameState {
   answers: (Answer | null)[]
   scores: number[]
   results: RoundResult[]
+  /** Manche chrono : heure limite de la saisie en cours (le temps continue même hors de l'écran). */
+  deadline?: number | null
 }

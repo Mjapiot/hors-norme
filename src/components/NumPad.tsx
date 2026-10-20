@@ -10,15 +10,19 @@ interface Props {
   onKey: (key: string) => void
   unit: string
   year?: boolean
+  /** false : l'affichage de la saisie est géré par le parent (Fourchette : deux champs). */
+  display?: boolean
 }
 
-export function NumPad({ value, onKey, unit, year = false }: Props) {
+export function NumPad({ value, onKey, unit, year = false, display = true }: Props) {
   return (
     <div className="numpad">
-      <div className="numpad-display" aria-live="polite">
-        <span className={value ? 'numpad-value' : 'numpad-value placeholder'}>{value ? formatDraft(value, year) : '?'}</span>
-        {unit && <span className="numpad-unit">{unit}</span>}
-      </div>
+      {display && (
+        <div className="numpad-display" aria-live="polite" aria-label="Ta réponse">
+          <span className={value ? 'numpad-value' : 'numpad-value placeholder'}>{value ? formatDraft(value, year) : '?'}</span>
+          {unit && <span className="numpad-unit">{unit}</span>}
+        </div>
+      )}
       <div className="numpad-keys">
         {KEYS.map((k) => (
           <button

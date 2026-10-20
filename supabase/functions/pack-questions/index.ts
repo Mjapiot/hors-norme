@@ -16,7 +16,7 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
-const COLUMNS = 'id,theme,type,prompt,unit,answer,items,year,subject,source,perishable,difficulty,verified_at,pack_id'
+const COLUMNS = 'id,theme,type,prompt,unit,answer,items,year,tolerance,subject,source,perishable,difficulty,verified_at,pack_id'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })

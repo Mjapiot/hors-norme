@@ -17,7 +17,7 @@ const url = env.SUPABASE_URL ?? env.VITE_SUPABASE_URL
 const key = env.SUPABASE_ANON_KEY ?? env.VITE_SUPABASE_ANON_KEY
 if (!url || !key) throw new Error('SUPABASE_URL / SUPABASE_ANON_KEY manquants dans .env.local')
 
-const cols = 'id,theme,type,prompt,unit,answer,items,year,subject,source,perishable,difficulty,verified_at'
+const cols = 'id,theme,type,prompt,unit,answer,items,year,tolerance,subject,source,perishable,difficulty,verified_at'
 const res = await fetch(`${url}/rest/v1/questions?select=${cols}&status=eq.published&order=id`, {
   headers: { apikey: key, Authorization: `Bearer ${key}` },
 })

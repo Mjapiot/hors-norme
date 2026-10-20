@@ -1,4 +1,5 @@
-import type { DuelQuestion, GameConfig, NumberQuestion, Question, RankingQuestion, Round, RoundKind } from './types'
+import { toleranceOf } from './scoring'
+import type { DuelQuestion, GameConfig, NumberQuestion, Question, RankingQuestion, Round, RoundKind, Theme } from './types'
 
 export type Rng = () => number
 
@@ -6,7 +7,9 @@ export type Rng = () => number
 export const TARGET_MODE_MAX_ROUNDS = 40
 /** Une manche bonus toutes les BONUS_EVERY manches. */
 export const BONUS_EVERY = 4
-const BONUS_ROTATION: RoundKind[] = ['chrono', 'ranking', 'higherlower']
+const BONUS_ROTATION: RoundKind[] = ['chrono', 'ranking', 'higherlower', 'range']
+/** Un thème ne revient pas avant ce nombre de manches (s'il y a d'autres thèmes disponibles). */
+const THEME_GAP = 2
 
 export function shuffle<T>(items: T[], rng: Rng): T[] {
   const a = [...items]
@@ -58,14 +61,33 @@ export function subjectsOf(q: Question): string[] {
   return keys
 }
 
-/** Retire et renvoie la première question dont aucun sujet n'a déjà été joué. */
-function takeFresh<T extends Question>(pool: T[], used: Set<string>, accept: (q: T) => boolean = () => true): T | undefined {
-  const pos = pool.findIndex((q) => accept(q) && subjectsOf(q).every((k) => !used.has(k)))
-  if (pos < 0) return undefined
-  const [q] = pool.splice(pos, 1)
-  subjectsOf(q).forEach((k) => used.add(k))
-  return q
+/** Thèmes déjà joués dans la partie (ordre des manches), pour varier. */
+interface ThemeTracker {
+  recent: Theme[]
+  counts: Map<Theme, number>
 }
+
+/**
+ * Retire et renvoie une question dont aucun sujet n'a déjà été joué, en variant les thèmes :
+ * on évite les thèmes des dernières manches et on privilégie les moins joués.
+ * À thème égal, l'ordre du paquet (jamais vues d'abord) est respecté.
+ */
+function takeFresh<T extends Question>(pool: T[], used: Set<string>, themes: ThemeTracker, accept: (q: T) => boolean = () => true): T | undefined {
+  const candidates = pool.flatMap((q, pos) => (accept(q) && subjectsOf(q).every((k) => !used.has(k)) ? [{ q, pos }] : []))
+  if (candidates.length === 0) return undefined
+  const fresh = candidates.filter((c) => !themes.recent.slice(-THEME_GAP).includes(c.q.theme))
+  const choices = fresh.length > 0 ? fresh : candidates
+  const least = Math.min(...choices.map((c) => themes.counts.get(c.q.theme) ?? 0))
+  const pick = choices.find((c) => (themes.counts.get(c.q.theme) ?? 0) === least)!
+  pool.splice(pick.pos, 1)
+  subjectsOf(pick.q).forEach((k) => used.add(k))
+  themes.recent.push(pick.q.theme)
+  themes.counts.set(pick.q.theme, (themes.counts.get(pick.q.theme) ?? 0) + 1)
+  return pick.q
+}
+
+/** Fourchette : il faut un rapport max/min qui ait du sens (quantité positive, pas une année ni des degrés). */
+export const fitsRange = (q: NumberQuestion) => q.answer > 0 && ['relative', 'tight', 'age'].includes(toleranceOf(q))
 
 export function isBonusSlot(index: number): boolean {
   return (index + 1) % BONUS_EVERY === 0
@@ -85,6 +107,7 @@ export function buildRounds(
   const rotationStart = Math.floor(rng() * BONUS_ROTATION.length)
   const rounds: Round[] = []
   const usedSubjects = new Set<string>()
+  const themes: ThemeTracker = { recent: [], counts: new Map() }
   let bonusCount = 0
 
   for (let i = 0; i < total; i++) {
@@ -95,7 +118,7 @@ export function buildRounds(
     }
 
     if (kind === 'ranking') {
-      const question = takeFresh(rankings, usedSubjects)
+      const question = takeFresh(rankings, usedSubjects, themes)
       if (question) {
         const indices = question.items.map((_, idx) => idx)
         let order = shuffle(indices, rng)
@@ -108,9 +131,18 @@ export function buildRounds(
       kind = 'higherlower'
     }
 
+    if (kind === 'range') {
+      const question = takeFresh(numbers, usedSubjects, themes, fitsRange)
+      if (question) {
+        rounds.push({ kind: 'range', question })
+        continue
+      }
+      kind = 'chrono'
+    }
+
     if (kind === 'higherlower') {
       // Un seuil à ±20 % n'a pas de sens pour une année.
-      const question = takeFresh(numbers, usedSubjects, (q) => !q.year)
+      const question = takeFresh(numbers, usedSubjects, themes, (q) => !q.year)
       if (question) {
         rounds.push({ kind: 'higherlower', question, threshold: makeThreshold(question.answer, rng) })
         continue
@@ -118,7 +150,7 @@ export function buildRounds(
       kind = 'chrono'
     }
 
-    const question = takeFresh(numbers, usedSubjects)
+    const question = takeFresh(numbers, usedSubjects, themes)
     if (!question) break
     rounds.push({ kind: kind === 'chrono' ? 'chrono' : 'classic', question })
   }
@@ -129,16 +161,29 @@ export function buildRounds(
 export const DUEL_RESERVE = 8
 
 /**
- * Réserve de questions « plus ou moins » pour les duels de rapidité :
- * jamais une question déjà prévue dans la partie, jamais une année.
+ * Réserve de questions pour les duels « estimation éclair » : dans les thèmes choisis
+ * (repli sur toute la banque s'il n'en reste pas), jamais une question ou un sujet déjà prévu.
  */
-export function buildDuels(questions: Question[], rounds: Round[], rng: Rng = Math.random): DuelQuestion[] {
+export function buildDuels(
+  questions: Question[],
+  rounds: Round[],
+  themes: Theme[],
+  seen: Set<string> = new Set(),
+  rng: Rng = Math.random,
+): DuelQuestion[] {
   const used = new Set(rounds.map((r) => r.question.id))
   const usedSubjects = new Set(rounds.flatMap((r) => subjectsOf(r.question)))
-  const pool = questions.filter(
-    (q): q is NumberQuestion => q.type === 'number' && !q.year && !used.has(q.id) && subjectsOf(q).every((k) => !usedSubjects.has(k)),
+  const eligible = questions.filter(
+    (q): q is NumberQuestion => q.type === 'number' && !used.has(q.id) && subjectsOf(q).every((k) => !usedSubjects.has(k)),
   )
-  return shuffle(pool, rng)
-    .slice(0, DUEL_RESERVE)
-    .map((question) => ({ question, threshold: makeThreshold(question.answer, rng) }))
+  const inThemes = eligible.filter((q) => themes.includes(q.theme))
+  const picked: NumberQuestion[] = []
+  const pickedSubjects = new Set<string>()
+  for (const q of prioritize(inThemes.length > 0 ? inThemes : eligible, seen, rng)) {
+    if (picked.length >= DUEL_RESERVE) break
+    if (subjectsOf(q).some((k) => pickedSubjects.has(k))) continue
+    subjectsOf(q).forEach((k) => pickedSubjects.add(k))
+    picked.push(q)
+  }
+  return picked.map((question) => ({ question }))
 }

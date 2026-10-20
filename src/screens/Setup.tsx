@@ -17,6 +17,7 @@ import { X } from '@phosphor-icons/react/dist/csr/X'
 import { Ico, THEME_ICONS } from '../components/Icons'
 import { useQuestionBank } from '../data/bank'
 import { colorFor } from '../lib/format'
+import { KEYS, load } from '../lib/storage'
 import { FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
 import type { EndCondition, GameConfig, Theme } from '../game/types'
 
@@ -40,11 +41,29 @@ const END_OPTIONS: { label: string; hint: string; value: EndCondition }[] = [
   { label: '5 questions', hint: 'Partie express · ≈ 7 min', value: { type: 'rounds', count: 5 } },
   { label: '10 questions', hint: 'Partie classique · ≈ 15 min', value: { type: 'rounds', count: 10 } },
   { label: 'Premier à 8 pts', hint: '≈ 8 manches', value: { type: 'target', points: 8 } },
-  { label: 'Premier à 12 pts', hint: '≈ 11 manches', value: { type: 'target', points: 12 } },
-  { label: 'Premier à 15 pts', hint: '≈ 14 manches', value: { type: 'target', points: 15 } },
+  { label: 'Premier à 12 pts', hint: '≈ 12 manches', value: { type: 'target', points: 12 } },
+  { label: 'Premier à 15 pts', hint: '≈ 15 manches', value: { type: 'target', points: 15 } },
 ]
 
 const sameEnd = (a: EndCondition, b: EndCondition) => JSON.stringify(a) === JSON.stringify(b)
+
+/** Dernière configuration enregistrée, vérifiée champ par champ (sinon la configuration par défaut). */
+export function loadConfig(): GameConfig {
+  const raw = load<Partial<GameConfig> | null>(KEYS.config, null)
+  if (!raw || typeof raw !== 'object') return DEFAULT_CONFIG
+  const mode = raw.mode === 'players' ? 'players' : 'teams'
+  const { min, max } = LIMITS[mode]
+  const names = Array.isArray(raw.names) && raw.names.every((n) => typeof n === 'string') ? raw.names.slice(0, max) : DEFAULT_CONFIG.names
+  const end = END_OPTIONS.find((o) => raw.end && sameEnd(o.value, raw.end))?.value ?? DEFAULT_CONFIG.end
+  const themes = Array.isArray(raw.themes) ? raw.themes.filter((t): t is Theme => t in THEMES) : DEFAULT_CONFIG.themes
+  return {
+    mode,
+    names: names.length >= min ? names : [...names, ...Array.from({ length: min - names.length }, (_, i) => defaultName(mode, names.length + i))],
+    end,
+    themes: themes.length > 0 ? themes : DEFAULT_CONFIG.themes,
+    bonus: typeof raw.bonus === 'boolean' ? raw.bonus : true,
+  }
+}
 
 const STEPS = ['Qui joue ?', 'Les noms', 'Fin de partie', 'Les thèmes'] as const
 
@@ -52,7 +71,8 @@ interface Props {
   onHelp: () => void
   initial: GameConfig
   onBack: () => void
-  onStart: (config: GameConfig) => void
+  /** false : la partie n'a pas pu être lancée (aucune question jouable). */
+  onStart: (config: GameConfig) => boolean
 }
 
 /** Configuration en 4 étapes : mode → noms → fin de partie → thèmes. */
@@ -63,10 +83,11 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
   const questions = useQuestionBank()
   const owned = useOwnedThemes()
   const [store, setStore] = useState<{ focus: PaidTheme | null } | null>(null)
+  const [startError, setStartError] = useState(false)
   // Thèmes jouables : gratuits + premium achetés et téléchargés.
   const playable: Theme[] = [...FREE_THEMES, ...owned.filter((t) => packQuestionCount(t) > 0)]
   const available = questions.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
-  const needed = cfg.end.type === 'rounds' ? cfg.end.count : 14
+  const needed = cfg.end.type === 'rounds' ? cfg.end.count : 15
 
   const chooseMode = (mode: GameConfig['mode']) => {
     const max = LIMITS[mode].max
@@ -79,12 +100,13 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
 
   const toggleTheme = (t: Theme) => {
     const themes = cfg.themes.includes(t) ? cfg.themes.filter((x) => x !== t) : [...cfg.themes, t]
+    setStartError(false)
     setCfg({ ...cfg, themes })
   }
 
   const start = () => {
     const names = cfg.names.map((n, i) => n.trim().slice(0, 20) || defaultName(cfg.mode, i))
-    onStart({ ...cfg, names, themes: cfg.themes.filter((t) => playable.includes(t)) })
+    setStartError(!onStart({ ...cfg, names, themes: cfg.themes.filter((t) => playable.includes(t)) }))
   }
 
   const back = () => (step === 0 ? onBack() : setStep(step - 1))
@@ -131,7 +153,7 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
 
       {step === 1 && (
         <section key="names" className="step">
-          <p className="help step-help">Donnez un nom à chaque {noun} (ou gardez ceux proposés).</p>
+          <p className="help step-help">Donne un nom à chaque {noun} (ou garde ceux proposés).</p>
           <ul className="names">
             {cfg.names.map((name, i) => (
               <li key={i}>
@@ -147,7 +169,7 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
                   autoComplete="off"
                 />
                 {cfg.names.length > limits.min && (
-                  <button type="button" className="icon-btn small" aria-label={`Retirer ${name}`} onClick={() => setCfg({ ...cfg, names: cfg.names.filter((_, k) => k !== i) })}>
+                  <button type="button" className="icon-btn small" aria-label={`Retirer ${name.trim() || defaultName(cfg.mode, i)}`} onClick={() => setCfg({ ...cfg, names: cfg.names.filter((_, k) => k !== i) })}>
                     <Ico icon={X} size={18} />
                   </button>
                 )}
@@ -239,14 +261,13 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
               </div>
             </>
           )}
-          {cfg.themes.length > 0 && available < needed && (
-            <p className="warning">Seulement {available} questions sur ces thèmes : la partie sera plus courte.</p>
-          )}
+          {cfg.themes.length > 0 && available < needed && <p className="warning">Peu de questions sur ces thèmes&nbsp;: la partie risque d’être plus courte.</p>}
+          {startError && <p className="warning">Aucune question disponible pour ces thèmes. Choisis-en d’autres.</p>}
           <label className="toggle">
             <input type="checkbox" checked={cfg.bonus} onChange={(e) => setCfg({ ...cfg, bonus: e.target.checked })} />
             <span>
               Manches bonus
-              <small>Chrono, classement, plus ou moins : une toutes les 4 questions</small>
+              <small>Chrono, classement, plus ou moins, fourchette&nbsp;: une toutes les 4 questions</small>
             </span>
           </label>
           <p className="recap">

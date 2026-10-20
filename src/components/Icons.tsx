@@ -1,4 +1,5 @@
 import { ArrowsDownUp } from '@phosphor-icons/react/dist/csr/ArrowsDownUp'
+import { ArrowsHorizontal } from '@phosphor-icons/react/dist/csr/ArrowsHorizontal'
 import { Buildings } from '@phosphor-icons/react/dist/csr/Buildings'
 import { CheckCircle } from '@phosphor-icons/react/dist/csr/CheckCircle'
 import { Fire } from '@phosphor-icons/react/dist/csr/Fire'
@@ -47,6 +48,7 @@ export const ROUND_ICONS: Record<RoundKind, Icon> = {
   chrono: Timer,
   ranking: ListNumbers,
   higherlower: ArrowsDownUp,
+  range: ArrowsHorizontal,
 }
 
 export const TIER_ICONS: Partial<Record<Tier, Icon>> = {

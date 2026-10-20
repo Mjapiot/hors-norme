@@ -51,10 +51,12 @@ export function Home({ canResume, onNew, onResume, onHelp }: Props) {
         <a href={`${SITE}/mentions-legales`} target="_blank" rel="noreferrer">Mentions légales</a>
       </nav>
 
-      <p className="footnote">
-        {questions.length} questions
-        {isAdmin() && ` · admin : ${questions.filter((q) => q.verified_at).length} vérifiées · source ${bankSource() === 'remote' ? 'Supabase' : 'embarquée'}`}
-      </p>
+      {/* Le nombre de questions reste secret pour les joueurs : affiché seulement en mode admin. */}
+      {isAdmin() && (
+        <p className="footnote">
+          admin : {questions.length} questions · {questions.filter((q) => q.verified_at).length} vérifiées · source {bankSource() === 'remote' ? 'Supabase' : 'embarquée'}
+        </p>
+      )}
     </main>
   )
 }

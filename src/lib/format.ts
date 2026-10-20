@@ -53,3 +53,8 @@ export const colorFor = (index: number) => TEAM_COLORS[index % TEAM_COLORS.lengt
 export function frenchSpacing(text: string): string {
   return text.replace(/ ([?!:;»])/g, '\u00a0$1').replace(/« /g, '«\u00a0')
 }
+
+/** « de Bob », « d’Alice » : élision devant une voyelle ou un h. */
+export function ofName(name: string): string {
+  return /^[aeiouyhàâäéèêëîïôöùûü]/i.test(name.trim()) ? `d’${name}` : `de ${name}`
+}

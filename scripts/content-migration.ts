@@ -31,7 +31,7 @@ const sql = (v: unknown): string => {
   if (typeof v === 'number') return String(v)
   return `'${String(v).replace(/'/g, "''")}'`
 }
-const COLS = ['id', 'pack_id', 'theme', 'type', 'prompt', 'unit', 'answer', 'items', 'year', 'subject', 'source', 'source_url', 'perishable', 'difficulty', 'status', 'verified_at', 'review_due_at', 'notes'] as const
+const COLS = ['id', 'pack_id', 'theme', 'type', 'prompt', 'unit', 'answer', 'items', 'year', 'tolerance', 'subject', 'source', 'source_url', 'perishable', 'difficulty', 'status', 'verified_at', 'review_due_at', 'notes'] as const
 const values = (r: AdminQuestion) =>
   `(${COLS.map((c) => {
     if (c === 'items') return r.items ? `${sql(JSON.stringify(r.items))}::jsonb` : 'null'

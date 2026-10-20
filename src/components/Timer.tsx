@@ -2,22 +2,24 @@ import { useEffect, useRef, useState } from 'react'
 import { play } from '../lib/sound'
 
 interface Props {
+  /** Heure limite (horodatage) : le temps s'écoule même si l'écran est quitté ou verrouillé. */
+  endAt: number
+  /** Durée totale, pour la barre. */
   seconds: number
   onTimeout: () => void
 }
 
-/** Compte à rebours basé sur l'horloge réelle (robuste si l'onglet est mis en pause). */
-export function Timer({ seconds, onTimeout }: Props) {
-  const [left, setLeft] = useState(seconds)
+/** Compte à rebours basé sur l'horloge réelle ; barre animée en continu, rouge sur la fin. */
+export function Timer({ endAt, seconds, onTimeout }: Props) {
+  const [left, setLeft] = useState(() => Math.max(0, Math.ceil((endAt - Date.now()) / 1000)))
   const timeoutRef = useRef(onTimeout)
   useEffect(() => {
     timeoutRef.current = onTimeout
   }, [onTimeout])
 
   useEffect(() => {
-    const endAt = Date.now() + seconds * 1000
     let fired = false
-    let shown = seconds
+    let shown = Math.ceil((endAt - Date.now()) / 1000)
     const id = window.setInterval(() => {
       const remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000))
       // Tic-tac sur les 5 dernières secondes.
@@ -32,12 +34,20 @@ export function Timer({ seconds, onTimeout }: Props) {
       }
     }, 200)
     return () => window.clearInterval(id)
-  }, [seconds])
+  }, [endAt])
 
-  const ratio = left / seconds
+  // La barre part de la fraction restante (calculée une fois, au montage) et se vide linéairement.
+  const [{ remainingMs, startRatio }] = useState(() => {
+    const ms = Math.max(0, endAt - Date.now())
+    return { remainingMs: ms, startRatio: Math.min(1, ms / (seconds * 1000)) }
+  })
   return (
     <div className={`timer${left <= 5 ? ' timer-urgent' : ''}`} role="timer" aria-label={`${left} secondes restantes`}>
-      <div className="timer-bar" style={{ transform: `scaleX(${ratio})` }} />
+      <div
+        key={endAt}
+        className="timer-bar"
+        style={{ '--from': startRatio, animationDuration: `${remainingMs}ms` } as React.CSSProperties}
+      />
       <span className="timer-text">{left}s</span>
     </div>
   )

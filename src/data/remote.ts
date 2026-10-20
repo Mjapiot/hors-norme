@@ -1,4 +1,5 @@
-import type { Question, Theme } from '../game/types'
+import { THEMES, TOLERANCES } from '../game/types'
+import type { Question, Theme, Tolerance } from '../game/types'
 
 /*
  * Accès Supabase côté joueurs : un simple GET sur l'API REST (PostgREST), sans SDK,
@@ -28,11 +29,15 @@ export interface QuestionRow {
   perishable: boolean
   difficulty: 1 | 2 | 3
   verified_at: string | null
+  tolerance?: Tolerance | null
 }
 
-const COLUMNS = 'id,theme,type,prompt,unit,answer,items,year,subject,source,perishable,difficulty,verified_at'
+const COLUMNS = 'id,theme,type,prompt,unit,answer,items,year,subject,source,perishable,difficulty,verified_at,tolerance'
 
 export function rowToQuestion(row: QuestionRow): Question | null {
+  // Thème inconnu de cette version de l'app (ajouté plus tard) : ignoré plutôt que de planter.
+  if (!row || typeof row.id !== 'string' || typeof row.prompt !== 'string' || !(row.theme in THEMES)) return null
+  if (![1, 2, 3].includes(row.difficulty)) return null
   const base = {
     id: row.id,
     theme: row.theme,
@@ -46,7 +51,8 @@ export function rowToQuestion(row: QuestionRow): Question | null {
   }
   if (row.type === 'number') {
     if (typeof row.answer !== 'number' || !Number.isFinite(row.answer)) return null
-    return { ...base, type: 'number', answer: row.answer, ...(row.year ? { year: true } : {}) }
+    const tolerance = row.tolerance && TOLERANCES.includes(row.tolerance) ? { tolerance: row.tolerance } : {}
+    return { ...base, type: 'number', answer: row.answer, ...(row.year ? { year: true } : {}), ...tolerance }
   }
   if (!Array.isArray(row.items) || row.items.length !== 4) return null
   if (!row.items.every((it) => typeof it?.label === 'string' && typeof it?.value === 'number')) return null

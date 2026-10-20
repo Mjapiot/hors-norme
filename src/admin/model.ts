@@ -1,4 +1,5 @@
-import type { Theme } from '../game/types'
+import { TOLERANCES } from '../game/types'
+import type { Theme, Tolerance } from '../game/types'
 
 export type Status = 'draft' | 'review' | 'published' | 'archived'
 
@@ -20,6 +21,8 @@ export interface AdminQuestion {
   answer: number | null
   items: { label: string; value: number }[] | null
   year: boolean
+  /** Façon de juger l'écart (null = automatique, déduit de l'unité). */
+  tolerance: Tolerance | null
   subject: string | null
   source: string
   source_url: string | null
@@ -65,6 +68,7 @@ export function blankQuestion(theme: Theme = 'insolite'): AdminQuestion {
     answer: 0,
     items: null,
     year: false,
+    tolerance: null,
     subject: null,
     source: '',
     source_url: null,
@@ -109,6 +113,7 @@ export function fromImport(raw: Record<string, unknown>, fallbackStatus: Status 
     answer: type === 'number' ? Number(raw.answer) : null,
     items: type === 'ranking' ? (raw.items as AdminQuestion['items']) : null,
     year: raw.year === true,
+    tolerance: TOLERANCES.includes(raw.tolerance as Tolerance) ? (raw.tolerance as Tolerance) : null,
     subject: typeof raw.subject === 'string' ? raw.subject : null,
     source: String(raw.source ?? ''),
     source_url: typeof raw.source_url === 'string' ? raw.source_url : null,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Lightning } from '@phosphor-icons/react/dist/csr/Lightning'
 import { Medal } from '@phosphor-icons/react/dist/csr/Medal'
@@ -12,14 +12,15 @@ import { celebrate } from '../lib/celebrate'
 import { play } from '../lib/sound'
 import { shareResults } from '../lib/shareResults'
 import { onGameFinished } from '../lib/review'
-import { correctRanking } from '../game/scoring'
+import { correctRanking, toleranceOf, TOLERANCE_RULES } from '../game/scoring'
 import { isOver, standings } from '../game/engine'
 import type { Answer, Breakdown, GameState, NumberQuestion, Round } from '../game/types'
 
-/** Compteur animé jusqu'à la valeur cible. */
-function useCountUp(target: number, durationMs = 1100): number {
+/** Compteur animé jusqu'à la valeur cible (instantané si la révélation est accélérée). */
+function useCountUp(target: number, instant: boolean, durationMs = 1100): number {
   const [value, setValue] = useState(0)
   useEffect(() => {
+    if (instant) return
     let frame = 0
     const start = performance.now()
     const tick = (now: number) => {
@@ -30,12 +31,12 @@ function useCountUp(target: number, durationMs = 1100): number {
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [target, durationMs])
-  return value
+  }, [target, durationMs, instant])
+  return instant ? target : value
 }
 
-function BigAnswer({ question }: { question: NumberQuestion }) {
-  const v = useCountUp(question.answer)
+function BigAnswer({ question, instant }: { question: NumberQuestion; instant: boolean }) {
+  const v = useCountUp(question.answer, instant)
   const decimals = (String(question.answer).split('.')[1] ?? '').length
   const shown = v === question.answer ? question.answer : Number(v.toFixed(decimals))
   return (
@@ -53,7 +54,8 @@ function BigAnswer({ question }: { question: NumberQuestion }) {
 function ScaleLine({ question, answers }: { question: NumberQuestion; answers: (Answer | null)[] }) {
   const guesses = answers.map((a) => (a?.kind === 'number' ? a.value : null))
   const valid = guesses.filter((g): g is number => g !== null)
-  const linear = question.year || question.answer <= 0
+  // Écart en unités (années, âges, degrés) : échelle linéaire ; quantités : logarithmique.
+  const linear = !TOLERANCE_RULES[toleranceOf(question)].relative || question.answer <= 0
   const offset = (g: number) => (linear ? g - question.answer : Math.log10(Math.max(g, question.answer / 1000) / question.answer))
   const spread = Math.max(linear ? 1 : 0.3, ...valid.map((g) => Math.abs(offset(g)))) * 1.15
   const position = (g: number) => Math.min(1, Math.max(0, 0.5 + offset(g) / (2 * spread))) * 100
@@ -77,6 +79,10 @@ function answerLabel(round: Round, answer: Answer | null): string {
     return formatNumber(answer.value, round.kind !== 'ranking' && round.question.year)
   }
   if (answer.kind === 'higherlower') return answer.choice === null ? '—' : answer.choice === 'plus' ? 'Plus' : 'Moins'
+  if (answer.kind === 'range') {
+    if (answer.min === null || answer.max === null) return '—'
+    return `${formatNumber(Math.min(answer.min, answer.max))} – ${formatNumber(Math.max(answer.min, answer.max))}`
+  }
   return ''
 }
 
@@ -100,11 +106,26 @@ function SourceLine({ round }: { round: Round }) {
 }
 
 /** Détail lisible des points : on apprend les règles en jouant. */
-function PointChips({ breakdown, multiplier, pendingDuel, bonusRound }: { breakdown: Breakdown; multiplier: number; pendingDuel: boolean; bonusRound: boolean }) {
+function PointChips({
+  breakdown,
+  multiplier,
+  pendingDuel,
+  bonusRound,
+  absorbed,
+  rangeRound,
+}: {
+  breakdown: Breakdown
+  multiplier: number
+  pendingDuel: boolean
+  bonusRound: boolean
+  /** Malus sans effet : le score était déjà à 0. */
+  absorbed: boolean
+  rangeRound: boolean
+}) {
   const chips: { label: string; tone: 'good' | 'bad' | 'neutral' }[] = []
   if (breakdown.precision > 0) chips.push({ label: `${bonusRound ? 'Bonus' : 'Précision'} +${breakdown.precision}`, tone: 'good' })
-  if (breakdown.win > 0) chips.push({ label: `Plus proche +${breakdown.win}`, tone: 'good' })
-  if (breakdown.malus < 0) chips.push({ label: `Hors Norme −${Math.abs(breakdown.malus)}`, tone: 'bad' })
+  if (breakdown.win > 0) chips.push({ label: `${rangeRound ? 'Plus serrée' : 'Plus proche'} +${breakdown.win}`, tone: 'good' })
+  if (breakdown.malus < 0) chips.push({ label: absorbed ? 'Hors Norme (déjà à 0)' : `Hors Norme −${Math.abs(breakdown.malus)}`, tone: 'bad' })
   if (pendingDuel) chips.push({ label: 'Duel pour le point de manche', tone: 'neutral' })
   if (multiplier > 1 && (breakdown.precision || breakdown.win)) chips.push({ label: `×${multiplier}`, tone: 'neutral' })
   if (chips.length === 0) return null
@@ -119,43 +140,75 @@ function PointChips({ breakdown, multiplier, pendingDuel, bonusRound }: { breakd
   )
 }
 
+/** Dernière manche révélée (son, confettis, animations) : rien ne se rejoue au retour d'un duel. */
+let revealedKey = ''
+const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
 export function RevealScreen({ state, onNext, onDuel }: { state: GameState; onNext: () => void; onDuel: () => void }) {
   const round = state.rounds[state.index]
   const result = state.results[state.results.length - 1]
   const { names } = state.config
   const pendingDuel = result.duel !== null && !result.duel.resolved
+  const shown = result.applied ?? result.points
   const rows = names
-    .map((name, i) => ({ name, i, answer: state.answers[i], points: result.points[i] }))
+    .map((name, i) => ({ name, i, answer: state.answers[i], points: shown[i] }))
     .sort((a, b) => b.points - a.points || a.i - b.i)
   const last = isOver(state)
-  const bonusRound = round.kind === 'ranking' || round.kind === 'higherlower'
+  const bonusRound = round.kind === 'ranking' || round.kind === 'higherlower' || round.kind === 'range'
   const compact = names.length >= 4
   const jackpot = result.tiers.some((t) => t === 'exact' || t === 'perfect')
 
-  // Son + confettis une seule fois, à l'arrivée sur l'écran (pas après un duel).
-  const resultCount = state.results.length
+  // Révélation accélérable : un tap n'importe où affiche tout de suite les résultats.
+  const key = `${state.rounds[0]?.question.id}:${state.index}`
+  const [fast, setFast] = useState(() => revealedKey === key || reducedMotion())
+  const [ready, setReady] = useState(fast)
+  const soundDone = useRef(revealedKey === key)
+  const playReveal = () => {
+    if (soundDone.current) return
+    soundDone.current = true
+    play(jackpot ? 'exact' : 'reveal')
+    if (jackpot) celebrate()
+  }
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      play(jackpot ? 'exact' : 'reveal')
-      if (jackpot) celebrate()
-    }, 900)
-    return () => window.clearTimeout(timer)
-  }, [resultCount])
+    revealedKey = key
+    const sound = window.setTimeout(playReveal, 900)
+    const done = window.setTimeout(() => setReady(true), 1200 + names.length * 100 + 300)
+    return () => {
+      window.clearTimeout(sound)
+      window.clearTimeout(done)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- une seule fois par manche
+  }, [key])
+  // Le tap qui accélère la révélation ne fait pas aussi passer à la suite.
+  const skippedAt = useRef(0)
+  const skip = () => {
+    if (ready) return
+    skippedAt.current = Date.now()
+    setFast(true)
+    setReady(true)
+    playReveal()
+  }
+  const go = (action: () => void) => () => {
+    if (!ready || Date.now() - skippedAt.current < 400) return skip()
+    action()
+  }
 
   return (
-    <main className={`screen reveal${compact ? ' compact' : ''}`}>
+    <main className={`screen reveal${compact ? ' compact' : ''}${fast ? ' fast' : ''}`} onPointerDown={skip}>
       <p className="question-compact">{frenchSpacing(round.question.prompt)}</p>
 
       {(round.kind === 'classic' || round.kind === 'chrono') && (
         <>
-          <BigAnswer question={round.question} />
+          <BigAnswer question={round.question} instant={fast} />
           <ScaleLine question={round.question} answers={state.answers} />
         </>
       )}
 
+      {round.kind === 'range' && <BigAnswer question={round.question} instant={fast} />}
+
       {round.kind === 'higherlower' && (
         <>
-          <BigAnswer question={round.question} />
+          <BigAnswer question={round.question} instant={fast} />
           <p className="verdict">
             C’était <strong>{round.question.answer > round.threshold ? 'PLUS' : 'MOINS'}</strong> que {formatNumber(round.threshold)} {round.question.unit}
           </p>
@@ -189,10 +242,12 @@ export function RevealScreen({ state, onNext, onDuel }: { state: GameState; onNe
             <li key={r.i} className={`tier-${tier}`} style={{ animationDelay: `${1.2 + k * 0.1}s` }}>
               <span className="dot" style={{ background: colorFor(r.i) }} />
               <span className="results-name">{r.name}</span>
-              <span className="results-answer">{answerLabel(round, r.answer)}</span>
-              <span className="results-note">
-                {TierIcon && <Ico icon={TierIcon} size={15} />}
-                {tier === 'absurd' ? `Hors Norme · ${result.labels[r.i]}` : result.labels[r.i]}
+              <span className="results-meta">
+                <span className="results-answer">{answerLabel(round, r.answer)}</span>
+                <span className="results-note">
+                  {TierIcon && <Ico icon={TierIcon} size={15} />}
+                  {tier === 'absurd' ? `Hors Norme · ${result.labels[r.i]}` : result.labels[r.i]}
+                </span>
               </span>
               <span className={`results-points${r.points > 0 ? ' positive' : r.points < 0 ? ' negative' : ''}`}>{formatDelta(r.points)}</span>
               <PointChips
@@ -200,6 +255,8 @@ export function RevealScreen({ state, onNext, onDuel }: { state: GameState; onNe
                 multiplier={result.multiplier}
                 pendingDuel={pendingDuel && (result.duel?.tied.includes(r.i) ?? false)}
                 bonusRound={bonusRound}
+                absorbed={shown[r.i] > result.points[r.i]}
+                rangeRound={round.kind === 'range'}
               />
             </li>
           )
@@ -208,7 +265,9 @@ export function RevealScreen({ state, onNext, onDuel }: { state: GameState; onNe
 
       {result.duel?.resolved && (
         <p className="verdict">
-          {result.duel.winner === null ? 'Duel : personne ne remporte le point de la manche.' : `Duel remporté par ${names[result.duel.winner]}.`}
+          {result.duel.winners.length === 1
+            ? `Duel éclair remporté par ${names[result.duel.winners[0]]}.`
+            : `Duel éclair : ${result.duel.winners.map((i) => names[i]).join(' et ')} se partagent le point.`}
         </p>
       )}
 
@@ -217,11 +276,11 @@ export function RevealScreen({ state, onNext, onDuel }: { state: GameState; onNe
 
       <div className="sticky-cta">
         {pendingDuel ? (
-          <button type="button" className="btn btn-primary btn-icon" onClick={onDuel}>
-            <Ico icon={Sword} size={22} /> Duel de rapidité
+          <button type="button" className={`btn btn-primary btn-icon${ready ? '' : ' btn-waiting'}`} aria-disabled={!ready} onClick={go(onDuel)}>
+            <Ico icon={Sword} size={22} /> Duel éclair
           </button>
         ) : (
-          <button type="button" className="btn btn-primary btn-icon" onClick={onNext}>
+          <button type="button" className={`btn btn-primary btn-icon${ready ? '' : ' btn-waiting'}`} aria-disabled={!ready} onClick={go(onNext)}>
             {last ? (
               <>
                 <Ico icon={Trophy} size={22} /> Voir le podium

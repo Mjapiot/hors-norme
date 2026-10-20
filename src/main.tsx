@@ -4,6 +4,7 @@ import { inject } from '@vercel/analytics'
 import '@fontsource-variable/bricolage-grotesque'
 import './index.css'
 import App from './App.tsx'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { unlockAudio } from './lib/sound'
 
 const NATIVE = import.meta.env.VITE_NATIVE === true
@@ -25,7 +26,9 @@ createRoot(document.getElementById('root')!).render(
         <AdminApp />
       </Suspense>
     ) : (
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     )}
   </StrictMode>,
 )

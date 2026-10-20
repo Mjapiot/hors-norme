@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { ArrowCounterClockwise } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise'
 import { ArrowsDownUp } from '@phosphor-icons/react/dist/csr/ArrowsDownUp'
+import { ArrowsHorizontal } from '@phosphor-icons/react/dist/csr/ArrowsHorizontal'
 import { Crosshair } from '@phosphor-icons/react/dist/csr/Crosshair'
 import { DeviceMobile } from '@phosphor-icons/react/dist/csr/DeviceMobile'
 import { Envelope } from '@phosphor-icons/react/dist/csr/Envelope'
@@ -17,7 +18,7 @@ import { Trophy } from '@phosphor-icons/react/dist/csr/Trophy'
 import { Warning } from '@phosphor-icons/react/dist/csr/Warning'
 import { X } from '@phosphor-icons/react/dist/csr/X'
 import type { Icon } from '@phosphor-icons/react'
-import { formatPercent, isAbsurd, precisionFor, relativeError, WIN_POINTS } from '../game/scoring'
+import { gapLabel, isAbsurd, precisionFor, relativeError, WIN_POINTS } from '../game/scoring'
 import { colorFor, formatNumber } from '../lib/format'
 import { Ico } from './Icons'
 
@@ -95,16 +96,17 @@ function HandoffDemo() {
 }
 
 /**
- * Curseur de ÷4 à ×4 la vraie valeur, centre = tout pile.
+ * Curseur de ÷6 à ×6 la vraie valeur, centre = tout pile.
  * Échelle « au carré » : très fine près de la bonne réponse (la zone 2 pts fait ~20 % de la course),
  * plus rapide vers les extrêmes.
  */
 const SLIDER_MAX = 1000
+const SLIDER_SPAN = 6
 const HALF = SLIDER_MAX / 2
 const sliderToGuess = (t: number) => {
   if (t === HALF) return EVEREST
   const x = (t - HALF) / HALF
-  const v = EVEREST * Math.pow(4, Math.sign(x) * x * x)
+  const v = EVEREST * Math.pow(SLIDER_SPAN, Math.sign(x) * x * x)
   return Number(v.toPrecision(v < 10000 ? 3 : 4))
 }
 
@@ -112,9 +114,9 @@ function PrecisionDemo({ withMalus = false, initial = 640, zones }: { withMalus?
   const [t, setT] = useState(initial)
   const guess = sliderToGuess(t)
   const err = relativeError(guess, EVEREST)
-  const { points, tier } = precisionFor(err)
-  const absurd = withMalus && isAbsurd(guess, EVEREST)
-  const label = tier === 'exact' ? 'Tout pile !' : `à ${formatPercent(err)}`
+  const { points, tier } = precisionFor(err, 'relative')
+  const absurd = withMalus && isAbsurd(guess, EVEREST, 'relative')
+  const label = tier === 'exact' ? 'Tout pile !' : gapLabel(guess, { answer: EVEREST, unit: 'm' })
   return (
     <div className="demo">
       <p className="demo-guess">
@@ -131,9 +133,9 @@ function PrecisionDemo({ withMalus = false, initial = 640, zones }: { withMalus?
         className="demo-range"
       />
       <div className="demo-scale" aria-hidden="true">
-        <span>÷4</span>
+        <span>÷6</span>
         <span>8 849 m</span>
-        <span>×4</span>
+        <span>×6</span>
       </div>
       <div className={`demo-result tier-${absurd ? 'absurd' : tier}`}>
         <span>{absurd ? 'Hors Norme' : label}</span>
@@ -154,16 +156,24 @@ function TierTable() {
     ['au-delà', '0'],
   ]
   return (
-    <table className="tier-table">
-      <tbody>
-        {rows.map(([a, b]) => (
-          <tr key={a}>
-            <td>{a}</td>
-            <td>{b}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <>
+      <table className="tier-table">
+        <tbody>
+          {rows.map(([a, b]) => (
+            <tr key={a}>
+              <td>{a}</td>
+              <td>{b}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <ul className="tier-notes">
+        <li>Années&nbsp;: à 5 ans, puis à 20 ans près.</li>
+        <li>Âges et températures&nbsp;: à 1, puis à 3 près.</li>
+        <li>Records serrés (sprints, sauts)&nbsp;: à 0,5 %, puis à 2 %.</li>
+        <li>Questions difficiles&nbsp;: paliers 1,5 fois plus larges.</li>
+      </ul>
+    </>
   )
 }
 
@@ -194,16 +204,16 @@ function ClosestDemo() {
   )
 }
 
-/** Zones calées sur l'échelle du curseur : ÷2 et ×2 tombent à 15 % et 85 % de la course. */
-const HALVING_POS = (1 - Math.sqrt(0.5)) / 2
+/** Zones calées sur l'échelle du curseur : ÷3 et ×3 tombent à ≈ 11 % et 89 % de la course. */
+const HALVING_POS = (1 - Math.sqrt(Math.log(3) / Math.log(SLIDER_SPAN))) / 2
 
 function MalusZones() {
   const edge = `${(HALVING_POS * 100).toFixed(1)}%`
   return (
     <div className="zones" aria-hidden="true" style={{ gridTemplateColumns: `${edge} 1fr ${edge}` }}>
-      <span className="zone bad">÷2</span>
+      <span className="zone bad">÷3</span>
       <span className="zone ok">pas de malus</span>
-      <span className="zone bad">×2</span>
+      <span className="zone bad">×3</span>
     </div>
   )
 }
@@ -213,6 +223,7 @@ function BonusTiles() {
     { icon: Timer, title: 'Chrono 30 s', text: 'Question secrète, révélée seulement quand tu as le téléphone.', pts: 'barème normal' },
     { icon: ListNumbers, title: 'Classement express', text: 'Remets 4 éléments dans l’ordre.', pts: '3 pts si parfait · 1 pt si 2 bien placés' },
     { icon: ArrowsDownUp, title: 'Plus ou moins', text: '« Plus ou moins de 7 500 m ? »', pts: '1 pt si juste' },
+    { icon: ArrowsHorizontal, title: 'Fourchette', text: 'Donne un minimum et un maximum.', pts: 'si c’est dedans : 3 pts si serrée, 2 ou 1 pt si plus large · +1 la plus serrée' },
   ]
   return (
     <ul className="bonus-tiles">
@@ -239,8 +250,8 @@ function EndDemo() {
       <div className="targets">
         {[
           ['8 pts', '≈ 8 manches'],
-          ['12 pts', '≈ 11 manches'],
-          ['15 pts', '≈ 14 manches'],
+          ['12 pts', '≈ 12 manches'],
+          ['15 pts', '≈ 15 manches'],
         ].map(([a, b]) => (
           <span key={a}>
             <Ico icon={Flag} size={16} /> <strong>{a}</strong>
@@ -294,7 +305,7 @@ const CARDS: { key: string; render: () => ReactNode }[] = [
         <p className="tuto-note">
           <Ico icon={Sword} size={18} />
           <span>
-            Égalité parfaite&nbsp;? <strong>Duel de rapidité</strong>&nbsp;: une question plus ou moins, le premier qui touche la bonne réponse gagne le point.
+            Égalité parfaite&nbsp;? <strong>Duel éclair</strong>&nbsp;: une nouvelle question, 10 secondes chacun à tour de rôle, le plus proche gagne le point.
           </span>
         </p>
       </Card>
@@ -304,7 +315,7 @@ const CARDS: { key: string; render: () => ReactNode }[] = [
     key: 'malus',
     render: () => (
       <Card icon={Warning} kicker="5 · À 3 équipes et plus" title="Attention aux réponses Hors Norme">
-        <p className="tuto-text">Une réponse plus du double ou moins de la moitié de la vraie valeur coûte 1 point. Le score ne descend jamais sous zéro.</p>
+        <p className="tuto-text">Une réponse plus du triple ou moins du tiers de la vraie valeur coûte 1 point. Le score ne descend jamais sous zéro.</p>
         <PrecisionDemo withMalus initial={950} zones={<MalusZones />} />
       </Card>
     ),
