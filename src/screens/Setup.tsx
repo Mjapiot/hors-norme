@@ -18,7 +18,7 @@ import { Ico, THEME_ICONS } from '../components/Icons'
 import { useQuestionBank } from '../data/bank'
 import { colorFor } from '../lib/format'
 import { KEYS, load } from '../lib/storage'
-import { DEFAULT_THEMES, FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
+import { DEFAULT_THEMES, FREE_THEMES, NEW_FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
 import type { EndCondition, GameConfig, Theme } from '../game/types'
 
 const LIMITS = { teams: { min: 2, max: 6 }, players: { min: 2, max: 10 } }
@@ -55,7 +55,10 @@ export function loadConfig(): GameConfig {
   const { min, max } = LIMITS[mode]
   const names = Array.isArray(raw.names) && raw.names.every((n) => typeof n === 'string') ? raw.names.slice(0, max) : DEFAULT_CONFIG.names
   const end = END_OPTIONS.find((o) => raw.end && sameEnd(o.value, raw.end))?.value ?? DEFAULT_CONFIG.end
-  const themes = Array.isArray(raw.themes) ? raw.themes.filter((t): t is Theme => t in THEMES) : DEFAULT_CONFIG.themes
+  let themes = Array.isArray(raw.themes) ? raw.themes.filter((t): t is Theme => t in THEMES) : DEFAULT_CONFIG.themes
+  // Joueur qui avait coché tous les thèmes de l'époque : les nouveaux thèmes gratuits s'ajoutent d'office.
+  const older = FREE_THEMES.filter((t) => !NEW_FREE_THEMES.includes(t))
+  if (older.every((t) => themes.includes(t))) themes = [...new Set([...themes, ...NEW_FREE_THEMES])]
   return {
     mode,
     names: names.length >= min ? names : [...names, ...Array.from({ length: min - names.length }, (_, i) => defaultName(mode, names.length + i))],

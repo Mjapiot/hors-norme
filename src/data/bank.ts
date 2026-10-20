@@ -23,6 +23,20 @@ export const MIN_REMOTE_QUESTIONS = 50
 interface Cached {
   syncedAt: number
   questions: Question[]
+  /** Base embarquée de la version qui a écrit ce cache (une mise à jour de l'app le rend « à resynchroniser »). */
+  snapshot?: string
+}
+
+/** Signature de la base embarquée : change à chaque version qui ajoute ou retire des questions. */
+const SNAPSHOT_ID = `${EMBEDDED.length}:${EMBEDDED.at(-1)?.id ?? ''}`
+
+/**
+ * Un thème présent dans l'app mais absent d'une copie (cache d'une ancienne version, serveur pas encore à jour)
+ * reste jouable avec les questions embarquées : un nouveau thème n'est jamais « vide ».
+ */
+function withEmbeddedThemes(list: Question[]): Question[] {
+  const themes = new Set(list.map((q) => q.theme))
+  return [...list, ...EMBEDDED.filter((q) => !themes.has(q.theme))]
 }
 
 /** Relit un cache local (qui peut être abîmé ou venir d'une ancienne version) : seules les questions valides restent. */
@@ -33,8 +47,10 @@ function sanitize(list: unknown): Question[] {
 
 const cachedRaw = load<Partial<Cached> | null>(CACHE_KEY, null)
 const cachedQuestions = sanitize(cachedRaw?.questions)
-let bank: Question[] = cachedQuestions.length >= MIN_REMOTE_QUESTIONS ? cachedQuestions : EMBEDDED
-let lastSync = cachedQuestions.length >= MIN_REMOTE_QUESTIONS && typeof cachedRaw?.syncedAt === 'number' ? cachedRaw.syncedAt : 0
+const cacheUsable = cachedQuestions.length >= MIN_REMOTE_QUESTIONS
+let bank: Question[] = cacheUsable ? withEmbeddedThemes(cachedQuestions) : EMBEDDED
+// Cache écrit par une autre version de l'app : on le garde en attendant, mais on resynchronise dès que possible.
+let lastSync = cacheUsable && cachedRaw?.snapshot === SNAPSHOT_ID && typeof cachedRaw.syncedAt === 'number' ? cachedRaw.syncedAt : 0
 const listeners = new Set<() => void>()
 
 // Questions des thèmes premium achetés (cache séparé, jouable hors ligne).
@@ -82,9 +98,9 @@ export async function syncQuestions(force = false): Promise<boolean> {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return false
   const remote = await fetchPublishedQuestions()
   if (!remote || remote.length < MIN_REMOTE_QUESTIONS) return false
-  bank = remote
+  bank = withEmbeddedThemes(remote)
   lastSync = Date.now()
-  save(CACHE_KEY, { syncedAt: lastSync, questions: remote } satisfies Cached)
+  save(CACHE_KEY, { syncedAt: lastSync, questions: remote, snapshot: SNAPSHOT_ID } satisfies Cached)
   recombine()
   return true
 }
