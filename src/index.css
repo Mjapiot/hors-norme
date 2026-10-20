@@ -2478,3 +2478,9 @@ p {
   color: var(--accent);
   text-align: center;
 }
+
+/* Résultats du duel éclair : même alignement que la révélation. */
+.duel .results {
+  align-self: stretch;
+  text-align: left;
+}

@@ -10,10 +10,11 @@ const ROOT = path.join(__dirname, '..', 'content', 'store', 'visuels')
 const RAW = path.join(ROOT, 'raw')
 const SHOTS = [
   ['01-accueil', 'Le jeu des records', 'à jouer entre amis'],
-  ['02-question', 'Le plus grand, le plus vieux…', 'à vous d’estimer !'],
+  ['02-question', 'Le plus grand, le plus vieux…', 'à toi d’estimer !'],
   ['03-saisie', 'Un seul téléphone,', 'chacun répond en secret'],
   ['04-revelation', 'Tout pile ?', 'Jackpot !'],
-  ['05-duel', 'Égalité parfaite ?', 'Duel de rapidité !'],
+  ['05-duel', 'Égalité parfaite ?', 'Duel éclair !'],
+  ['06-fourchette', 'Nouveau : la Fourchette', 'vise juste et serré'],
   ['07-tutoriel', 'Des règles simples,', 'apprises en 1 minute'],
 ]
 const FONT = "'Helvetica Neue', 'Arial Black', Arial, sans-serif"

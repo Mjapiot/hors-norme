@@ -527,7 +527,7 @@ export function DuelScreen({ state, onResolve }: { state: GameState; onResolve: 
       </ul>
       <p className="verdict">
         {winners.length === 1
-          ? `${state.config.names[winners[0]]} remporte le point de la manche !`
+          ? `Point de la manche pour ${state.config.names[winners[0]]} !`
           : `Encore égalité : ${winners.map((i) => state.config.names[i]).join(' et ')} se partagent le point.`}
       </p>
       <div className="sticky-cta">
