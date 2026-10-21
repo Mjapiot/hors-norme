@@ -173,7 +173,10 @@ async function themes(W, H) {
       ['C-themes', themes],
     ]) {
       const buf = await fn(W, H)
-      await sharp(buf).flatten({ background: '#120d26' }).jpeg({ quality: 92 }).toFile(path.join(OUT, `${name}-${W}x${H}.jpg`))
+      const flat = sharp(buf).flatten({ background: '#120d26' })
+      await flat.clone().jpeg({ quality: 92 }).toFile(path.join(OUT, `${name}-${W}x${H}.jpg`))
+      // App Store Connect n'accepte que le PNG pour l'en-tête.
+      await flat.clone().png({ compressionLevel: 9, palette: false }).toFile(path.join(OUT, `${name}-${W}x${H}.png`))
     }
   }
   console.log('en-têtes générés')
