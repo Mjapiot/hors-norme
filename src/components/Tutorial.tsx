@@ -151,8 +151,8 @@ function PrecisionDemo({ withMalus = false, initial = 640, zones }: { withMalus?
 function TierTable() {
   const rows = [
     ['Tout pile', '3 pts'],
-    ['à 5 % ou moins', '2 pts'],
-    ['à 20 % ou moins', '1 pt'],
+    ['à 10 % ou moins', '2 pts'],
+    ['à 30 % ou moins', '1 pt'],
     ['au-delà', '0'],
   ]
   return (
@@ -168,10 +168,11 @@ function TierTable() {
         </tbody>
       </table>
       <ul className="tier-notes">
-        <li>Années&nbsp;: à 5 ans, puis à 20 ans près.</li>
-        <li>Âges et températures&nbsp;: à 1, puis à 3 près.</li>
-        <li>Records serrés (sprints, sauts)&nbsp;: à 0,5 %, puis à 2 %.</li>
+        <li>Années&nbsp;: à 10 ans, puis à 30 ans près.</li>
+        <li>Âges et températures&nbsp;: à 2, puis à 5 près.</li>
+        <li>Records serrés (sprints, sauts)&nbsp;: à 1 %, puis à 3 %.</li>
         <li>Questions difficiles&nbsp;: paliers 1,5 fois plus larges.</li>
+        <li>Niveau Détente&nbsp;: paliers encore plus larges. Expert&nbsp;: plus stricts.</li>
       </ul>
     </>
   )
@@ -179,7 +180,7 @@ function TierTable() {
 
 function ClosestDemo() {
   const rows = [
-    { name: 'Équipe 1', guess: 8700, chips: ['Précision +2', `Plus proche +${WIN_POINTS}`], total: 3 },
+    { name: 'Équipe 1', guess: 8700, chips: ['Précision +2', `Plus proche +${WIN_POINTS}`], total: 2 + WIN_POINTS },
     { name: 'Équipe 2', guess: 7500, chips: ['Précision +1'], total: 1 },
   ]
   return (
@@ -223,7 +224,7 @@ function BonusTiles() {
     { icon: Timer, title: 'Chrono 30 s', text: 'Question secrète, révélée seulement quand tu as le téléphone.', pts: 'barème normal' },
     { icon: ListNumbers, title: 'Classement express', text: 'Remets 4 éléments dans l’ordre.', pts: '3 pts si parfait · 1 pt si 2 bien placés' },
     { icon: ArrowsDownUp, title: 'Plus ou moins', text: '« Plus ou moins de 7 500 m ? »', pts: '1 pt si juste' },
-    { icon: ArrowsHorizontal, title: 'Fourchette', text: 'Donne un minimum et un maximum.', pts: 'si c’est dedans : 3 pts si serrée, 2 ou 1 pt si plus large · +1 la plus serrée' },
+    { icon: ArrowsHorizontal, title: 'Fourchette', text: 'Donne un minimum et un maximum.', pts: 'si c’est dedans : 3 pts si serrée, 2 ou 1 pt si plus large · +2 la plus serrée' },
   ]
   return (
     <ul className="bonus-tiles">
@@ -249,9 +250,9 @@ function EndDemo() {
       </p>
       <div className="targets">
         {[
-          ['8 pts', '≈ 8 manches'],
-          ['12 pts', '≈ 12 manches'],
-          ['15 pts', '≈ 15 manches'],
+          ['15 pts', '≈ 9 manches'],
+          ['20 pts', '≈ 12 manches'],
+          ['25 pts', '≈ 16 manches'],
         ].map(([a, b]) => (
           <span key={a}>
             <Ico icon={Flag} size={16} /> <strong>{a}</strong>
@@ -299,8 +300,8 @@ const CARDS: { key: string; render: () => ReactNode }[] = [
   {
     key: 'proche',
     render: () => (
-      <Card icon={Crosshair} kicker="4 · Le plus proche" title="+1 pour le plus près">
-        <p className="tuto-text">Le plus proche gagne un point en plus… seulement s’il a marqué. Deux équipes très loin&nbsp;? 0 pour tout le monde.</p>
+      <Card icon={Crosshair} kicker="4 · Le plus proche" title={`+${WIN_POINTS} pour le plus près`}>
+        <p className="tuto-text">Chaque manche a un vainqueur&nbsp;: le plus proche gagne {WIN_POINTS} points en plus, même s’il est loin. Seule exception&nbsp;: une réponse Hors Norme.</p>
         <ClosestDemo />
         <p className="tuto-note">
           <Ico icon={Sword} size={18} />
@@ -315,7 +316,7 @@ const CARDS: { key: string; render: () => ReactNode }[] = [
     key: 'malus',
     render: () => (
       <Card icon={Warning} kicker="5 · À 3 équipes et plus" title="Attention aux réponses Hors Norme">
-        <p className="tuto-text">Une réponse plus du triple ou moins du tiers de la vraie valeur coûte 1 point. Le score ne descend jamais sous zéro.</p>
+        <p className="tuto-text">Une réponse plus du triple ou moins du tiers de la vraie valeur coûte 1 point (×5 ou ÷5 pour une question difficile) et ne peut pas gagner la manche. Le score ne descend jamais sous zéro.</p>
         <PrecisionDemo withMalus initial={950} zones={<MalusZones />} />
       </Card>
     ),
@@ -332,7 +333,7 @@ const CARDS: { key: string; render: () => ReactNode }[] = [
     key: 'fin',
     render: () => (
       <Card icon={Trophy} kicker="7 · Fin de partie" title="Jusqu’au bout du suspense">
-        <p className="tuto-text">En 5 ou 10 questions, la dernière compte double (sauf le malus). En mode objectif, le premier à 8, 12 ou 15 points gagne.</p>
+        <p className="tuto-text">En 5 ou 10 questions, la dernière compte double (sauf le malus). En mode objectif, le premier à 15, 20 ou 25 points gagne.</p>
         <EndDemo />
       </Card>
     ),

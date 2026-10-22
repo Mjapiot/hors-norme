@@ -25,12 +25,12 @@ import { ROUND_LABELS, THEMES } from '../game/types'
 import type { Answer, GameState, NumberQuestion, Round } from '../game/types'
 import { CHRONO_SECONDS, canUndo, currentDuel, isDoubleRound, participantAt } from '../game/engine'
 import { isSoundOn, play, setSoundOn, unlockAudio } from '../lib/sound'
-import { duelWinners, gapLabel } from '../game/scoring'
+import { duelWinners, gapLabel, WIN_POINTS } from '../game/scoring'
 
 /** Temps de réponse de chaque ex æquo au duel éclair. */
 export const DUEL_SECONDS = 10
 /** Une équipe est « à balle de match » à moins de ce nombre de points de l'objectif (≈ une manche réussie). */
-export const MATCH_POINT_GAP = 4
+export const MATCH_POINT_GAP = 5
 
 function SoundToggle() {
   const [on, setOn] = useState(isSoundOn())
@@ -139,7 +139,7 @@ const KIND_HELP: Record<Round['kind'], string> = {
   chrono: 'Pas de triche : personne ne voit la question avant son tour.',
   higherlower: 'Plus ou moins ? 1 point pour chaque bonne réponse.',
   ranking: '3 points si tout est bien classé, 1 point si 2 éléments sont bien placés.',
-  range: 'Si la réponse est dans ta fourchette : 3 points si elle est serrée, 2 ou 1 point si elle est plus large, +1 pour la plus serrée.',
+  range: 'Si la réponse est dans ta fourchette : 3 points si elle est serrée, 2 ou 1 point si elle est plus large, +2 pour la plus serrée.',
 }
 
 function MatchPoint({ state }: { state: GameState }) {
@@ -520,7 +520,7 @@ export function DuelScreen({ state, onResolve }: { state: GameState; onResolve: 
                 <span className="results-answer">{g === null ? '—' : formatNumber(g, duel.question.year)}</span>
                 <span className="results-note">{g === null ? 'Pas de réponse' : gapLabel(g, duel.question)}</span>
               </span>
-              <span className={`results-points${winners.includes(i) ? ' positive' : ''}`}>{winners.includes(i) ? '+1' : '0'}</span>
+              <span className={`results-points${winners.includes(i) ? ' positive' : ''}`}>{winners.includes(i) ? `+${WIN_POINTS}` : '0'}</span>
             </li>
           )
         })}

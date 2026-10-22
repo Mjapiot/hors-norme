@@ -117,7 +117,7 @@ export function reducer(state: GameState | null, action: Action): GameState | nu
     case 'reveal': {
       if (state.phase !== 'allin') return state
       const answers = state.answers.map((a) => a ?? ({ kind: 'number', value: null } as Answer))
-      let result = scoreRound(state.rounds[state.index], answers, { multiplier: isDoubleRound(state) ? 2 : 1 })
+      let result = scoreRound(state.rounds[state.index], answers, { multiplier: isDoubleRound(state) ? 2 : 1, level: state.config.level ?? 'classique' })
       if (result.duel && !currentDuel(state)) result = shareTie(result)
       const scores = applyPoints(state.scores, result.points)
       return {

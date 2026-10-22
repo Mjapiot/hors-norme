@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { QUESTIONS } from '../data/questions'
 import { buildDuels, buildRounds, fitsRange, makeThreshold, roundNice, subjectKey, subjectsOf } from './deck'
 import { CHRONO_SECONDS, canUndo, initialState, isDoubleRound, isOver, participantAt, reducer, resumeState, standings } from './engine'
-import { duelWinners, gapLabel, isAbsurd, precisionFor, resolveDuel, scoreHigherLower, scoreNumber, scoreRange, scoreRanking, shareTie, toleranceOf } from './scoring'
+import { duelWinners, gapLabel, isAbsurd, precisionFor, resolveDuel, scoreHigherLower, scoreNumber, scoreRange, scoreRanking, shareTie, toleranceOf, WIN_POINTS } from './scoring'
 import type { GameConfig, GameState, NumberQuestion } from './types'
 import { applyKey, formatDraft, frenchSpacing, parseDraft } from '../lib/format'
 
@@ -36,24 +36,31 @@ function nq(answer: number, extra: Partial<NumberQuestion> = {}): NumberQuestion
 }
 
 describe('scoring — tolérance par type de question', () => {
-  it('quantités : tout pile 3, ≤ 5 % 2, ≤ 20 % 1, sinon 0', () => {
+  it('quantités : tout pile 3, ≤ 10 % 2, ≤ 30 % 1, sinon 0', () => {
     expect(precisionFor(0, 'relative').points).toBe(3)
-    expect(precisionFor(0.05, 'relative').points).toBe(2)
-    expect(precisionFor(0.0501, 'relative').points).toBe(1)
-    expect(precisionFor(0.2, 'relative').points).toBe(1)
-    expect(precisionFor(0.204, 'relative').points).toBe(0)
+    expect(precisionFor(0.1, 'relative').points).toBe(2)
+    expect(precisionFor(0.1001, 'relative').points).toBe(1)
+    expect(precisionFor(0.3, 'relative').points).toBe(1)
+    expect(precisionFor(0.304, 'relative').points).toBe(0)
   })
 
   it('questions difficiles : paliers 1,5 fois plus larges', () => {
-    expect(precisionFor(0.07, 'relative', 3).points).toBe(2)
-    expect(precisionFor(0.29, 'relative', 3).points).toBe(1)
-    expect(precisionFor(0.31, 'relative', 3).points).toBe(0)
-    expect(precisionFor(0.07, 'relative', 2).points).toBe(1)
+    expect(precisionFor(0.14, 'relative', 3).points).toBe(2)
+    expect(precisionFor(0.44, 'relative', 3).points).toBe(1)
+    expect(precisionFor(0.46, 'relative', 3).points).toBe(0)
+    expect(precisionFor(0.14, 'relative', 2).points).toBe(1)
   })
 
-  it('records serrés : 10 s au 100 m (à 4,4 %) ne rapporte plus 2 points', () => {
+  it('niveau de la partie : Détente élargit, Expert resserre', () => {
+    expect(precisionFor(0.14, 'relative', 1, 'detente').points).toBe(2)
+    expect(precisionFor(0.08, 'relative', 1, 'expert').points).toBe(1)
+    expect(precisionFor(0.24, 'relative', 1, 'expert').points).toBe(0)
+    expect(precisionFor(0.44, 'relative', 1, 'detente').points).toBe(1)
+  })
+
+  it('records serrés : 10 s au 100 m (à 4,4 %) ne rapporte aucun point de précision', () => {
     const sprint = nq(9.58, { unit: 'secondes', tolerance: 'tight' })
-    expect(scoreNumber([9.6, 9.75, 10, 11], sprint).breakdown.map((b) => b.precision)).toEqual([2, 1, 0, 0])
+    expect(scoreNumber([9.6, 9.8, 10, 11], sprint).breakdown.map((b) => b.precision)).toEqual([2, 1, 0, 0])
   })
 
   it('déduit la tolérance : années, âges, températures (sauf très chaudes), sinon %', () => {
@@ -66,35 +73,43 @@ describe('scoring — tolérance par type de question', () => {
     expect(toleranceOf(nq(122, { unit: 'ans', tolerance: 'relative' }))).toBe('relative')
   })
 
-  it('âges et degrés en écart absolu', () => {
+  it('âges et degrés en écart absolu (à 2, puis à 5 près)', () => {
     const calment = nq(122, { unit: 'ans' })
-    expect(scoreNumber([122, 121, 119, 100], calment).breakdown.map((b) => b.precision)).toEqual([3, 2, 1, 0])
+    expect(scoreNumber([122, 120, 117, 100], calment).breakdown.map((b) => b.precision)).toEqual([3, 2, 1, 0])
     const body = nq(13.7, { unit: '°C' })
-    expect(scoreNumber([14.5, 16, 20], body).breakdown.map((b) => b.precision)).toEqual([2, 1, 0])
+    expect(scoreNumber([15, 18, 20], body).breakdown.map((b) => b.precision)).toEqual([2, 1, 0])
   })
 
-  it('années en écart absolu, libellé « trop tôt / trop tard »', () => {
-    const r = scoreNumber([1830, 1815, 1700], nq(1832, { year: true, unit: '' }))
-    expect(r.points).toEqual([2 + 1, 1, 0])
+  it('années en écart absolu (à 10, puis à 30 ans), libellé « trop tôt / trop tard »', () => {
+    const r = scoreNumber([1830, 1810, 1700], nq(1832, { year: true, unit: '' }))
+    expect(r.points).toEqual([2 + 2, 1, 0])
     expect(r.labels[0]).toBe('2 ans trop tôt')
   })
 })
 
-describe('scoring — précision + gagnant de manche', () => {
-  it('le plus proche gagne +1 ; le second ne marque que sa précision', () => {
+describe('scoring — précision + vainqueur de manche', () => {
+  it('le plus proche gagne +2 ; le second ne marque que sa précision', () => {
     const r = scoreNumber([8700, 7500], nq(8849))
-    expect(r.points).toEqual([2 + 1, 1])
+    expect(r.points).toEqual([2 + WIN_POINTS, 1])
   })
 
-  it('deux équipes trop loin : 0 point pour tout le monde, pas de point de manche', () => {
+  it('chaque manche a un vainqueur, même si tout le monde est loin', () => {
     const r = scoreNumber([50, 200], nq(8849))
-    expect(r.points).toEqual([0, 0])
+    expect(r.points).toEqual([0, WIN_POINTS])
     expect(r.duel).toBeNull()
   })
 
-  it('tout pile : 3 + 1, écart affiché dans l’unité', () => {
+  it('une réponse Hors Norme ne peut pas gagner la manche', () => {
+    // 3 joueurs : 30 000 et 40 000 sont au-delà de ×3 (malus) ; 4 000 est loin mais reste le vainqueur.
+    const r = scoreNumber([30000, 40000, 4000], nq(8849))
+    expect(r.points).toEqual([-1, -1, WIN_POINTS])
+    // Tout le monde Hors Norme : personne ne gagne la manche.
+    expect(scoreNumber([30000, 40000, 50000], nq(8849)).points).toEqual([-1, -1, -1])
+  })
+
+  it('tout pile : 3 + 2, écart affiché dans l’unité', () => {
     const r = scoreNumber([8849, 9000], nq(8849))
-    expect(r.points).toEqual([4, 2])
+    expect(r.points).toEqual([3 + WIN_POINTS, 2])
     expect(r.labels).toEqual(['Tout pile', '151 m de trop'])
   })
 
@@ -111,11 +126,11 @@ describe('scoring — précision + gagnant de manche', () => {
   it('égalité parfaite entre les meilleurs → duel en attente, sans point de manche', () => {
     const r = scoreNumber([110, 90, 400], nq(100))
     expect(r.duel).toEqual({ tied: [0, 1], winners: [], guesses: [], resolved: false })
-    expect(r.points).toEqual([1, 1, -1])
+    expect(r.points).toEqual([2, 2, -1])
     const resolved = resolveDuel(r, [1], [null, 95, null])
-    expect(resolved.points).toEqual([1, 2, -1])
+    expect(resolved.points).toEqual([2, 2 + WIN_POINTS, -1])
     expect(resolved.duel?.resolved).toBe(true)
-    expect(resolveDuel(r, [0, 1]).points).toEqual([2, 2, -1])
+    expect(resolveDuel(r, [0, 1]).points).toEqual([2 + WIN_POINTS, 2 + WIN_POINTS, -1])
   })
 
   it('duel éclair : le plus proche gagne, nouvelle égalité ou aucune réponse → partage', () => {
@@ -126,33 +141,35 @@ describe('scoring — précision + gagnant de manche', () => {
     expect(duelWinners([0, 2], [null, null, 140], q)).toEqual([2])
   })
 
-  it('sans question de duel, les ex-æquo partagent le point', () => {
-    expect(shareTie(scoreNumber([110, 90], nq(100))).points).toEqual([2, 2])
+  it('sans question de duel, les ex-æquo partagent le point de manche', () => {
+    expect(shareTie(scoreNumber([110, 90], nq(100))).points).toEqual([2 + WIN_POINTS, 2 + WIN_POINTS])
   })
 
-  it('malus « Hors Norme » symétrique (×3 / ÷3), seulement à partir de 3 participants', () => {
-    expect(scoreNumber([100, 350], nq(100)).points).toEqual([4, 0])
+  it('malus « Hors Norme » symétrique (×3 / ÷3, ×5 / ÷5 si difficile), seulement à partir de 3 participants', () => {
+    expect(scoreNumber([100, 350], nq(100)).points).toEqual([3 + WIN_POINTS, 0])
     const r = scoreNumber([100, 350, 30, 40], nq(100))
-    expect(r.points).toEqual([4, -1, -1, 0])
+    expect(r.points).toEqual([3 + WIN_POINTS, -1, -1, 0])
     expect(r.tiers[1]).toBe('absurd')
     expect(isAbsurd(301, 100, 'relative')).toBe(true)
     expect(isAbsurd(300, 100, 'relative')).toBe(false)
-    expect(isAbsurd(33.4, 100, 'relative')).toBe(false)
     expect(isAbsurd(33.3, 100, 'relative')).toBe(true)
     expect(isAbsurd(0, 100, 'relative')).toBe(true)
+    expect(isAbsurd(400, 100, 'relative', 3)).toBe(false)
+    expect(isAbsurd(501, 100, 'relative', 3)).toBe(true)
+    expect(isAbsurd(19.9, 100, 'relative', 3)).toBe(true)
     expect(isAbsurd(1600, 1832, 'years')).toBe(true)
-    expect(isAbsurd(1700, 1832, 'years')).toBe(false)
+    expect(isAbsurd(1600, 1832, 'years', 3)).toBe(false)
     expect(isAbsurd(50, 13.7, 'degrees')).toBe(true)
   })
 
   it('une absence de réponse vaut 0, sans malus', () => {
     const r = scoreNumber([null, 10, 40], nq(10))
-    expect(r.points).toEqual([0, 4, -1])
+    expect(r.points).toEqual([0, 3 + WIN_POINTS, -1])
     expect(r.labels[0]).toBe('Pas de réponse')
   })
 
   it('points doublés : gains x2, malus inchangé', () => {
-    expect(scoreNumber([100, 350, 30], nq(100), { multiplier: 2 }).points).toEqual([8, -1, -1])
+    expect(scoreNumber([100, 350, 30], nq(100), { multiplier: 2 }).points).toEqual([(3 + WIN_POINTS) * 2, -1, -1])
   })
 })
 
@@ -171,10 +188,10 @@ describe('scoring — manches bonus', () => {
     expect(scoreHigherLower(['plus', 'moins', null], 120, 100).points).toEqual([1, 0, 0])
   })
 
-  it('fourchette : points selon la largeur, +1 à la plus serrée juste, 0 si dehors', () => {
+  it('fourchette : points selon la largeur, +2 à la plus serrée juste, 0 si dehors', () => {
     const r = scoreRange(
       [
-        { min: 90, max: 120 }, // ×1,33 → 3 + 1
+        { min: 90, max: 120 }, // ×1,33 → 3 + 2
         { min: 50, max: 140 }, // ×2,8 → 2
         { min: 10, max: 500 }, // ×50 → 1
         { min: 120, max: 200 }, // dehors
@@ -182,15 +199,14 @@ describe('scoring — manches bonus', () => {
       ],
       100,
     )
-    expect(r.points).toEqual([4, 2, 1, 0, 0])
+    expect(r.points).toEqual([3 + WIN_POINTS, 2, 1, 0, 0])
     expect(r.labels[3]).toBe('Fourchette trop haute')
     expect(r.labels[4]).toBe('Pas de réponse')
-    // Bornes inversées acceptées, minimum nul = fourchette « très large ».
-    expect(scoreRange([{ min: 120, max: 90 }, { min: 0, max: 1000 }], 100).points).toEqual([4, 1])
+    expect(scoreRange([{ min: 120, max: 90 }, { min: 0, max: 1000 }], 100).points).toEqual([3 + WIN_POINTS, 1])
   })
 
-  it('fourchette : à égalité de largeur, le +1 est partagé', () => {
-    expect(scoreRange([{ min: 90, max: 120 }, { min: 90, max: 120 }], 100).points).toEqual([4, 4])
+  it('fourchette : à égalité de largeur, le bonus est partagé', () => {
+    expect(scoreRange([{ min: 90, max: 120 }, { min: 90, max: 120 }], 100).points).toEqual([3 + WIN_POINTS, 3 + WIN_POINTS])
   })
 })
 
@@ -292,11 +308,11 @@ describe('moteur de partie', () => {
   })
 
   it('mode points cibles : s’arrête quand un leader unique atteint l’objectif', () => {
-    const cfg = config({ names: ['A', 'B'], bonus: false, end: { type: 'target', points: 8 } })
+    const cfg = config({ names: ['A', 'B'], bonus: false, end: { type: 'target', points: 15 } })
     const s = initialState(cfg, buildRounds(QUESTIONS, cfg, new Set(), seeded(4)))
-    expect(isOver({ ...s, scores: [7, 3] })).toBe(false)
-    expect(isOver({ ...s, scores: [8, 3] })).toBe(true)
-    expect(isOver({ ...s, scores: [12, 12] })).toBe(false)
+    expect(isOver({ ...s, scores: [14, 3] })).toBe(false)
+    expect(isOver({ ...s, scores: [15, 3] })).toBe(true)
+    expect(isOver({ ...s, scores: [20, 20] })).toBe(false)
   })
 
   it('ignore les actions hors phase', () => {
@@ -311,7 +327,7 @@ describe('moteur de partie', () => {
     const s = initialState(cfg, buildRounds(QUESTIONS, cfg, new Set(), seeded(6)))
     expect(isDoubleRound(s)).toBe(false)
     expect(isDoubleRound({ ...s, index: 4 })).toBe(true)
-    expect(isDoubleRound({ ...s, index: 4, config: { ...cfg, end: { type: 'target', points: 8 } } })).toBe(false)
+    expect(isDoubleRound({ ...s, index: 4, config: { ...cfg, end: { type: 'target', points: 15 } } })).toBe(false)
   })
 
   it('égalité → duel → point attribué au vainqueur, scores jamais négatifs', () => {
@@ -327,13 +343,13 @@ describe('moteur de partie', () => {
     }
     s = reducer(s, { type: 'reveal' })
     expect(s!.phase).toBe('reveal')
-    expect(s!.scores).toEqual([1, 1, 0]) // C : −1 mais plancher à 0
+    expect(s!.scores).toEqual([2, 2, 0]) // C : −1 mais plancher à 0
     expect(reducer(s, { type: 'next' })).toBe(s) // duel obligatoire avant de continuer
     s = reducer(s, { type: 'startDuel' })
     expect(s!.phase).toBe('duel')
     s = reducer(s, { type: 'resolveDuel', winners: [0], guesses: [] })
     expect(s!.phase).toBe('reveal')
-    expect(s!.scores).toEqual([2, 1, 0])
+    expect(s!.scores).toEqual([2 + WIN_POINTS, 2, 0])
     expect(reducer(s, { type: 'next' })!.phase).toBe('question')
   })
 
@@ -435,6 +451,34 @@ describe('V1.1 — tirage, chrono, reprise', () => {
     expect(resumeState({ ...s, phase: 'input' })!.phase).toBe('handoff')
     const chrono = { ...s, phase: 'input' as const, deadline: 5000, rounds: s.rounds.map((r) => ({ ...r, kind: 'chrono' as const })) }
     expect(resumeState(chrono)!.phase).toBe('input')
+  })
+})
+
+describe('V1.2 — niveaux de difficulté', () => {
+  const avgDifficulty = (level: 'detente' | 'classique' | 'expert') => {
+    let sum = 0
+    let n = 0
+    for (let seed = 1; seed <= 60; seed++) {
+      for (const r of buildRounds(QUESTIONS, config({ level, bonus: false }), new Set(), seeded(seed))) {
+        sum += r.question.difficulty
+        n++
+      }
+    }
+    return sum / n
+  }
+
+  it('Détente tire des questions plus faciles qu’Expert', () => {
+    const detente = avgDifficulty('detente')
+    const classique = avgDifficulty('classique')
+    const expert = avgDifficulty('expert')
+    expect(detente).toBeLessThan(classique)
+    expect(classique).toBeLessThan(expert)
+  })
+
+  it('une partie sauvegardée sans niveau se joue en Classique', () => {
+    const cfg = config({ names: ['A', 'B'], bonus: false })
+    delete (cfg as Partial<GameConfig>).level
+    expect(buildRounds(QUESTIONS, cfg, new Set(), seeded(3))).toHaveLength(10)
   })
 })
 

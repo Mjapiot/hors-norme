@@ -18,8 +18,12 @@ import { Ico, THEME_ICONS } from '../components/Icons'
 import { useQuestionBank } from '../data/bank'
 import { colorFor } from '../lib/format'
 import { KEYS, load } from '../lib/storage'
-import { DEFAULT_THEMES, FREE_THEMES, PAID_THEMES, THEMES } from '../game/types'
-import type { EndCondition, GameConfig, Theme } from '../game/types'
+import { DEFAULT_THEMES, FREE_THEMES, LEVELS, PAID_THEMES, THEMES } from '../game/types'
+import type { EndCondition, GameConfig, Level, Theme } from '../game/types'
+import type { Icon } from '@phosphor-icons/react'
+import { Coffee } from '@phosphor-icons/react/dist/csr/Coffee'
+import { Fire } from '@phosphor-icons/react/dist/csr/Fire'
+import { Target } from '@phosphor-icons/react/dist/csr/Target'
 
 const LIMITS = { teams: { min: 2, max: 6 }, players: { min: 2, max: 10 } }
 
@@ -35,14 +39,15 @@ export const DEFAULT_CONFIG: GameConfig = {
   end: { type: 'rounds', count: 10 },
   themes: DEFAULT_THEMES,
   bonus: true,
+  level: 'classique',
 }
 
 const END_OPTIONS: { label: string; hint: string; value: EndCondition }[] = [
   { label: '5 questions', hint: 'Partie express · ≈ 7 min', value: { type: 'rounds', count: 5 } },
   { label: '10 questions', hint: 'Partie classique · ≈ 15 min', value: { type: 'rounds', count: 10 } },
-  { label: 'Premier à 8 pts', hint: '≈ 8 manches', value: { type: 'target', points: 8 } },
-  { label: 'Premier à 12 pts', hint: '≈ 12 manches', value: { type: 'target', points: 12 } },
-  { label: 'Premier à 15 pts', hint: '≈ 15 manches', value: { type: 'target', points: 15 } },
+  { label: 'Premier à 15 pts', hint: '≈ 9 manches', value: { type: 'target', points: 15 } },
+  { label: 'Premier à 20 pts', hint: '≈ 12 manches', value: { type: 'target', points: 20 } },
+  { label: 'Premier à 25 pts', hint: '≈ 16 manches', value: { type: 'target', points: 25 } },
 ]
 
 const sameEnd = (a: EndCondition, b: EndCondition) => JSON.stringify(a) === JSON.stringify(b)
@@ -62,10 +67,12 @@ export function loadConfig(): GameConfig {
     // Chaque nouvelle partie démarre avec tous les thèmes cochés (la revanche, elle, garde ceux de la partie).
     themes: DEFAULT_CONFIG.themes,
     bonus: typeof raw.bonus === 'boolean' ? raw.bonus : true,
+    level: raw.level && raw.level in LEVELS ? raw.level : 'classique',
   }
 }
 
-const STEPS = ['Qui joue ?', 'Les noms', 'Fin de partie', 'Les thèmes'] as const
+const STEPS = ['Qui joue ?', 'Les noms', 'Fin de partie', 'Difficulté', 'Les thèmes'] as const
+const LEVEL_ICONS: Record<Level, Icon> = { detente: Coffee, classique: Target, expert: Fire }
 
 interface Props {
   onHelp: () => void
@@ -88,7 +95,7 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
   // Thèmes jouables : gratuits + premium achetés et téléchargés.
   const playable: Theme[] = [...FREE_THEMES, ...owned.filter((t) => packQuestionCount(t) > 0)]
   const available = questions.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
-  const needed = cfg.end.type === 'rounds' ? cfg.end.count : 15
+  const needed = cfg.end.type === 'rounds' ? cfg.end.count : 16
 
   const chooseMode = (mode: GameConfig['mode']) => {
     const max = LIMITS[mode].max
@@ -217,6 +224,32 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
       )}
 
       {step === 3 && (
+        <section key="level" className="step">
+          <p className="help step-help">Quel niveau pour cette partie&nbsp;?</p>
+          {(Object.keys(LEVELS) as Level[]).map((lv) => (
+            <button
+              key={lv}
+              type="button"
+              className={`choice choice-small${(cfg.level ?? 'classique') === lv ? ' active' : ''}`}
+              onClick={() => {
+                setCfg({ ...cfg, level: lv })
+                setStep(4)
+              }}
+            >
+              <span className="choice-icon">
+                <Ico icon={LEVEL_ICONS[lv]} size={24} weight="duotone" />
+              </span>
+              <span className="choice-text">
+                <strong>{LEVELS[lv].label}</strong>
+                <small>{LEVELS[lv].hint}</small>
+              </span>
+              <Ico icon={CaretRight} size={20} className="choice-caret" />
+            </button>
+          ))}
+        </section>
+      )}
+
+      {step === 4 && (
         <section key="themes" className="step">
           <h3>
             {cfg.themes.filter((t) => playable.includes(t)).length}/{playable.length} thèmes sélectionnés
@@ -299,7 +332,7 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
             </span>
           </label>
           <p className="recap">
-            {cfg.names.length} {noun}s · {END_OPTIONS.find((o) => sameEnd(o.value, cfg.end))?.label.toLowerCase()}
+            {cfg.names.length} {noun}s · {END_OPTIONS.find((o) => sameEnd(o.value, cfg.end))?.label.toLowerCase()} · {LEVELS[cfg.level ?? 'classique'].label.toLowerCase()}
           </p>
           <div className="sticky-cta">
             <button type="button" className="btn btn-primary" disabled={cfg.themes.length === 0} onClick={start}>

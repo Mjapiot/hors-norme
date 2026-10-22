@@ -1,5 +1,5 @@
 import { toleranceOf } from './scoring'
-import type { DuelQuestion, GameConfig, NumberQuestion, Question, RankingQuestion, Round, RoundKind, Theme } from './types'
+import type { DuelQuestion, GameConfig, Level, NumberQuestion, Question, RankingQuestion, Round, RoundKind, Theme } from './types'
 
 export type Rng = () => number
 
@@ -20,12 +20,25 @@ export function shuffle<T>(items: T[], rng: Rng): T[] {
   return a
 }
 
-/** Questions jamais vues d'abord, puis les déjà vues — chaque groupe mélangé. */
-function prioritize<T extends Question>(items: T[], seen: Set<string>, rng: Rng): T[] {
-  return [
-    ...shuffle(items.filter((q) => !seen.has(q.id)), rng),
-    ...shuffle(items.filter((q) => seen.has(q.id)), rng),
-  ]
+/** Poids de tirage des questions faciles, moyennes et difficiles selon le niveau de la partie. */
+export const LEVEL_WEIGHTS: Record<Level, [number, number, number]> = {
+  detente: [3, 2, 0.3],
+  classique: [1, 1, 1],
+  expert: [0.3, 1, 2],
+}
+
+/** Mélange pondéré : une question de poids 3 a trois fois plus de chances de sortir tôt. */
+function weightedShuffle<T extends Question>(items: T[], rng: Rng, weights: [number, number, number]): T[] {
+  return items
+    .map((q) => ({ q, key: -Math.log(rng() || Number.MIN_VALUE) / weights[q.difficulty - 1] }))
+    .sort((a, b) => a.key - b.key)
+    .map((x) => x.q)
+}
+
+/** Questions jamais vues d'abord, puis les déjà vues — chaque groupe mélangé selon le niveau. */
+function prioritize<T extends Question>(items: T[], seen: Set<string>, rng: Rng, level: Level = 'classique'): T[] {
+  const w = LEVEL_WEIGHTS[level]
+  return [...weightedShuffle(items.filter((q) => !seen.has(q.id)), rng, w), ...weightedShuffle(items.filter((q) => seen.has(q.id)), rng, w)]
 }
 
 /** Arrondit à 2 chiffres significatifs pour un seuil « rond » (6 000, 0,45…). */
@@ -100,8 +113,9 @@ export function buildRounds(
   rng: Rng = Math.random,
 ): Round[] {
   const pool = questions.filter((q) => config.themes.includes(q.theme))
-  const numbers = prioritize(pool.filter((q): q is NumberQuestion => q.type === 'number'), seen, rng)
-  const rankings = prioritize(pool.filter((q): q is RankingQuestion => q.type === 'ranking'), seen, rng)
+  const level = config.level ?? 'classique'
+  const numbers = prioritize(pool.filter((q): q is NumberQuestion => q.type === 'number'), seen, rng, level)
+  const rankings = prioritize(pool.filter((q): q is RankingQuestion => q.type === 'ranking'), seen, rng, level)
 
   const total = config.end.type === 'rounds' ? config.end.count : TARGET_MODE_MAX_ROUNDS
   const rotationStart = Math.floor(rng() * BONUS_ROTATION.length)

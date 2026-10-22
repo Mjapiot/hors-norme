@@ -1,15 +1,16 @@
 import { formatNumber } from '../lib/format'
-import type { Answer, Breakdown, NumberQuestion, Round, RoundResult, Tier, Tolerance } from './types'
+import type { Answer, Breakdown, Level, NumberQuestion, Round, RoundResult, Tier, Tolerance } from './types'
 
 /*
- * Barème « précision + gagnant de manche » :
+ * Barème « précision + vainqueur de manche » (V1.2) :
  *  - chaque réponse marque selon SON écart : tout pile 3, palier serré 2, palier large 1, sinon 0 ;
  *    l'écart se juge selon le type de question (voir TOLERANCE_RULES) ;
- *  - les questions difficiles (niveau 3) ont des paliers 1,5 fois plus larges ;
- *  - le plus proche gagne +1, seulement s'il a marqué (sinon personne) ;
+ *  - les questions difficiles ont des paliers 1,5 fois plus larges, et le niveau de la partie
+ *    élargit (Détente) ou resserre (Expert) tous les paliers ;
+ *  - chaque manche a un vainqueur : le plus proche gagne +2, même loin, sauf réponse « Hors Norme » ;
  *  - égalité parfaite pour ce point → duel « estimation éclair » ;
  *  - à partir de 3 participants, une réponse « Hors Norme » (plus du triple ou moins du tiers
- *    de la vraie valeur, ou l'équivalent en unités) coûte 1 point ;
+ *    de la vraie valeur, ×5 / ÷5 pour une question difficile, ou l'équivalent en unités) coûte 1 point ;
  *  - la dernière question compte double (gains seulement, le malus reste à −1).
  */
 
@@ -24,16 +25,20 @@ interface ToleranceRule {
 }
 
 export const TOLERANCE_RULES: Record<Tolerance, ToleranceRule> = {
-  relative: { close: 0.05, near: 0.2, relative: true, absurd: { ratio: 3 } },
-  tight: { close: 0.005, near: 0.02, relative: true, absurd: { ratio: 1.2 } },
-  years: { close: 5, near: 20, relative: false, absurd: { units: 200 } },
-  age: { close: 1, near: 3, relative: false, absurd: { ratio: 3 } },
-  degrees: { close: 1, near: 3, relative: false, absurd: { units: 30 } },
+  relative: { close: 0.1, near: 0.3, relative: true, absurd: { ratio: 3 } },
+  tight: { close: 0.01, near: 0.03, relative: true, absurd: { ratio: 1.2 } },
+  years: { close: 10, near: 30, relative: false, absurd: { units: 200 } },
+  age: { close: 2, near: 5, relative: false, absurd: { ratio: 3 } },
+  degrees: { close: 2, near: 5, relative: false, absurd: { units: 30 } },
 }
 /** Paliers élargis pour les questions difficiles. */
 export const HARD_FACTOR = 1.5
+/** Question difficile : le seuil « Hors Norme » s'éloigne (×3 → ×5, 200 ans → 333 ans…). */
+export const HARD_ABSURD_FACTOR = 2
+/** Élargissement des paliers selon le niveau de la partie. */
+export const LEVEL_TOLERANCE: Record<Level, number> = { detente: 1.5, classique: 1, expert: 0.75 }
 
-export const WIN_POINTS = 1
+export const WIN_POINTS = 2
 export const MALUS_POINTS = -1
 /** Le malus « Hors Norme » ne s'applique qu'à partir de ce nombre de participants. */
 export const MALUS_MIN_PARTICIPANTS = 3
@@ -62,6 +67,7 @@ export function toleranceOf(q: Pick<NumberQuestion, 'tolerance' | 'year' | 'unit
 
 export interface ScoreOptions {
   multiplier?: 1 | 2
+  level?: Level
 }
 
 export function relativeError(guess: number, answer: number): number {
@@ -74,19 +80,24 @@ export function errorFor(guess: number, answer: number, tolerance: Tolerance): n
   return TOLERANCE_RULES[tolerance].relative ? relativeError(guess, answer) : Math.abs(guess - answer)
 }
 
-/** Réponse « Hors Norme » : beaucoup trop haute ou trop basse, de façon symétrique. */
-export function isAbsurd(guess: number, answer: number, tolerance: Tolerance): boolean {
+/**
+ * Réponse « Hors Norme » : beaucoup trop haute ou trop basse, de façon symétrique.
+ * Question difficile : seuil plus éloigné (×5 / ÷5 au lieu de ×3 / ÷3).
+ */
+export function isAbsurd(guess: number, answer: number, tolerance: Tolerance, difficulty: 1 | 2 | 3 = 1): boolean {
   const { absurd } = TOLERANCE_RULES[tolerance]
-  if ('units' in absurd) return Math.abs(guess - answer) > absurd.units
+  const hard = difficulty === 3
+  if ('units' in absurd) return Math.abs(guess - answer) > absurd.units * (hard ? 5 / 3 : 1)
   if (answer <= 0) return false
   if (guess <= 0) return true
-  return guess > answer * absurd.ratio || guess < answer / absurd.ratio
+  const ratio = hard ? (absurd.ratio - 1) * HARD_ABSURD_FACTOR + 1 : absurd.ratio
+  return guess > answer * ratio || guess < answer / ratio
 }
 
-export function precisionFor(error: number, tolerance: Tolerance, difficulty: 1 | 2 | 3 = 1): { points: number; tier: Tier } {
+export function precisionFor(error: number, tolerance: Tolerance, difficulty: 1 | 2 | 3 = 1, level: Level = 'classique'): { points: number; tier: Tier } {
   if (error <= EPSILON) return { points: 3, tier: 'exact' }
   const rule = TOLERANCE_RULES[tolerance]
-  const factor = difficulty === 3 ? HARD_FACTOR : 1
+  const factor = (difficulty === 3 ? HARD_FACTOR : 1) * LEVEL_TOLERANCE[level]
   if (error <= rule.close * factor + EPSILON) return { points: 2, tier: 'close' }
   if (error <= rule.near * factor + EPSILON) return { points: 1, tier: 'near' }
   return { points: 0, tier: 'far' }
@@ -140,15 +151,15 @@ export function scoreNumber(guesses: (number | null)[], question: NumberQuestion
       tiers.push('none')
       return
     }
-    const { points, tier } = precisionFor(err, tolerance, question.difficulty)
-    const absurd = malusActive && isAbsurd(g, question.answer, tolerance)
+    const { points, tier } = precisionFor(err, tolerance, question.difficulty, opts.level)
+    const absurd = malusActive && isAbsurd(g, question.answer, tolerance, question.difficulty)
     breakdown.push({ precision: points, win: 0, malus: absurd ? MALUS_POINTS : 0 })
     tiers.push(absurd ? 'absurd' : tier)
     labels.push(gapLabel(g, question))
   })
 
-  // Point de la manche : le plus proche parmi ceux qui ont marqué.
-  const scorers = errors.flatMap((e, i) => (e !== null && breakdown[i].precision > 0 ? [{ e, i }] : []))
+  // Vainqueur de la manche : le plus proche, même loin, sauf réponse « Hors Norme ».
+  const scorers = errors.flatMap((e, i) => (e !== null && breakdown[i].malus === 0 ? [{ e, i }] : []))
   let duel: RoundResult['duel'] = null
   if (scorers.length > 0) {
     const best = Math.min(...scorers.map((s) => s.e))

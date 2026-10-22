@@ -98,7 +98,15 @@ export type Answer =
   | { kind: 'higherlower'; choice: 'plus' | 'moins' | null }
   | { kind: 'range'; min: number | null; max: number | null }
 
-export type EndCondition = { type: 'rounds'; count: 5 | 10 } | { type: 'target'; points: 8 | 12 | 15 }
+export type EndCondition = { type: 'rounds'; count: 5 | 10 } | { type: 'target'; points: 15 | 20 | 25 }
+
+/** Niveau de la partie : quelles questions sont tirées et à quel point les paliers sont tolérants. */
+export type Level = 'detente' | 'classique' | 'expert'
+export const LEVELS: Record<Level, { label: string; hint: string }> = {
+  detente: { label: 'Détente', hint: 'Surtout des questions faciles, des paliers plus larges' },
+  classique: { label: 'Classique', hint: 'Le mélange de toutes les questions' },
+  expert: { label: 'Expert', hint: 'Des questions plus dures, des paliers plus stricts' },
+}
 
 export interface GameConfig {
   mode: 'teams' | 'players'
@@ -106,6 +114,8 @@ export interface GameConfig {
   end: EndCondition
   themes: Theme[]
   bonus: boolean
+  /** Absent dans les parties sauvegardées avant la V1.2 : « classique ». */
+  level?: Level
 }
 
 /** Niveau atteint par une réponse — sert à l'affichage (icône, couleur). */
@@ -114,7 +124,7 @@ export type Tier = 'exact' | 'close' | 'near' | 'far' | 'absurd' | 'none' | 'per
 export interface Breakdown {
   /** Points de précision (0 à 3) ou points de la manche bonus. */
   precision: number
-  /** +1 pour le plus proche (0 tant qu'un duel est en attente). */
+  /** +2 pour le plus proche de la manche (0 tant qu'un duel est en attente). */
   win: number
   /** −1 pour une réponse « Hors Norme » (à partir de 3 participants). */
   malus: number
