@@ -16,6 +16,7 @@ const SHOTS = [
   ['05-duel', 'Égalité parfaite ?', 'Duel éclair !'],
   ['06-fourchette', 'Nouveau : la Fourchette', 'vise juste et serré'],
   ['07-tutoriel', 'Des règles simples,', 'apprises en 1 minute'],
+  ['08-difficulte', 'Détente ou Expert ?', 'à chacun son niveau'],
 ]
 const FONT = "'Helvetica Neue', 'Arial Black', Arial, sans-serif"
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
