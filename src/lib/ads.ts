@@ -117,9 +117,11 @@ export async function showEndInterstitial(): Promise<void> {
     AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => done()),
     AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => done()),
   ])
+  // Filet de sécurité : si la fermeture n'est jamais signalée, on ne bloque pas le jeu.
+  const timeout = new Promise<void>((resolve) => window.setTimeout(resolve, 120_000))
   try {
     await AdMob.showInterstitial()
-    await closed
+    await Promise.race([closed, timeout])
   } catch {
     interstitialLoaded = false
   } finally {

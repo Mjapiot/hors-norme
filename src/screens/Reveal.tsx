@@ -12,6 +12,7 @@ import { celebrate } from '../lib/celebrate'
 import { play } from '../lib/sound'
 import { shareResults } from '../lib/shareResults'
 import { onGameFinished } from '../lib/review'
+import { showEndInterstitial } from '../lib/ads'
 import { correctRanking, toleranceOf, TOLERANCE_RULES } from '../game/scoring'
 import { isOver, standings } from '../game/engine'
 import type { Answer, Breakdown, GameState, NumberQuestion, Round } from '../game/types'
@@ -320,6 +321,14 @@ export function EndScreen({ state, onReplay, onHome }: { state: GameState; onRep
   const winners = ranking.filter((r) => r.rank === 1).map((r) => state.config.names[r.index])
 
   const [sharing, setSharing] = useState(false)
+  // V1.3 : la pub de fin passe au moment de quitter le podium (jamais pendant la célébration).
+  const [leaving, setLeaving] = useState(false)
+  const leave = async (go: () => void) => {
+    if (leaving) return
+    setLeaving(true)
+    await showEndInterstitial()
+    go()
+  }
   // Une partie terminée (une seule fois par podium) : sert à proposer de noter l'app au bon moment.
   useEffect(() => {
     onGameFinished()
@@ -366,7 +375,7 @@ export function EndScreen({ state, onReplay, onHome }: { state: GameState; onRep
       )}
 
       <div className="stack">
-        <button type="button" className="btn btn-primary" onClick={onReplay}>
+        <button type="button" className="btn btn-primary" disabled={leaving} onClick={() => void leave(onReplay)}>
           Revanche !
         </button>
         <button
@@ -381,7 +390,7 @@ export function EndScreen({ state, onReplay, onHome }: { state: GameState; onRep
         >
           <Ico icon={Export} size={20} /> Partager les résultats
         </button>
-        <button type="button" className="btn btn-ghost" onClick={onHome}>
+        <button type="button" className="btn btn-ghost" disabled={leaving} onClick={() => void leave(onHome)}>
           Accueil
         </button>
       </div>
