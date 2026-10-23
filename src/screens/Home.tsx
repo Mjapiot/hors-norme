@@ -3,6 +3,7 @@ import { Ico } from '../components/Icons'
 import { InstallHint } from '../components/InstallHint'
 import { bankSource, useQuestionBank } from '../data/bank'
 import { isAdmin } from '../lib/admin'
+import { showAdPrivacyOptions, usePrivacyOptions } from '../lib/ads'
 
 /** Pages légales hébergées sur le site (ouvertes dans le navigateur depuis l'app native). */
 const SITE = 'https://hors-norme.vercel.app'
@@ -16,6 +17,7 @@ interface Props {
 
 export function Home({ canResume, onNew, onResume, onHelp }: Props) {
   const questions = useQuestionBank()
+  const adChoices = usePrivacyOptions()
   return (
     <main className="screen home">
       <div className="home-hero">
@@ -49,6 +51,11 @@ export function Home({ canResume, onNew, onResume, onHelp }: Props) {
         <a href={`${SITE}/support`} target="_blank" rel="noreferrer">Aide</a>
         <a href={`${SITE}/confidentialite`} target="_blank" rel="noreferrer">Confidentialité</a>
         <a href={`${SITE}/mentions-legales`} target="_blank" rel="noreferrer">Mentions légales</a>
+        {adChoices && (
+          <button type="button" className="link-button" onClick={() => void showAdPrivacyOptions()}>
+            Choix publicitaires
+          </button>
+        )}
       </nav>
 
       {/* Le nombre de questions reste secret pour les joueurs : affiché seulement en mode admin. */}

@@ -4,6 +4,7 @@ import { isNative } from './lib/native'
 import { getQuestions, syncPackQuestions, syncQuestions } from './data/bank'
 import { PACKS_ENABLED } from './lib/packs'
 import { getAppUserId, getOwnedThemes, refreshOwned } from './lib/purchases'
+import { startAds } from './lib/ads'
 import { buildDuels, buildRounds } from './game/deck'
 import { reducer, resumeState } from './game/engine'
 import type { Answer, GameConfig } from './game/types'
@@ -61,6 +62,12 @@ export default function App() {
       if (getOwnedThemes().length > 0) await syncPackQuestions(await getAppUserId())
     })
   }, [])
+
+  // V1.3 : consentement publicitaire puis préchargement de la première pub (iOS, ADS=1 uniquement).
+  // Au tout premier lancement, on attend la fermeture du tutoriel pour ne pas empiler les écrans.
+  useEffect(() => {
+    if (!tutorial) void startAds()
+  }, [tutorial])
 
   // Questions à jour depuis Supabase : au lancement, puis à chaque retour au premier plan.
   useEffect(() => {

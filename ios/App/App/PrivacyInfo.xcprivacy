@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   Manifeste de confidentialité de Hors Norme (exigé par Apple).
-  - Aucun pistage, aucun domaine de pistage, aucune donnée collectée.
+  - Le code de l'app ne piste pas et ne collecte rien ; les données publicitaires (V1.3)
+    sont déclarées par le manifeste propre au SDK Google Mobile Ads.
   - API « à justifier » utilisées par Capacitor et ses plugins :
     UserDefaults (CA92.1 : réglages propres à l'app) et horodatage de fichiers
     (C617.1 : fichiers de l'app, ex. image de résultats écrite dans le cache avant partage).
