@@ -132,21 +132,48 @@ export async function showEndInterstitial(): Promise<void> {
   }
 }
 
+// Vidéo récompensée préparée à l'avance (une seule à la fois) : elle démarre sans attente au toucher.
+let rewardedPrep: { key: string; ready: Promise<boolean> } | null = null
+
+/**
+ * Prépare la vidéo dès l'ouverture de la feuille d'un thème premium. Les paramètres de vérification
+ * côté serveur (appareil, thème) sont fixés à la préparation.
+ */
+export function prepareRewarded(ssvUserId: string, customData: string): Promise<boolean> {
+  const key = `${ssvUserId}|${customData}`
+  if (rewardedPrep?.key === key) return rewardedPrep.ready
+  const ready = (async () => {
+    if (!canShowAds || !(await startAds())) return false
+    try {
+      await AdMob.prepareRewardVideoAd({ adId: REWARDED_ID, isTesting: ADS_TESTING, ssv: { userId: ssvUserId, customData } })
+      return true
+    } catch {
+      return false
+    }
+  })()
+  rewardedPrep = { key, ready }
+  // Échec (hors ligne, pas de vidéo) : on réessaiera au prochain appel.
+  void ready.then((ok) => {
+    if (!ok && rewardedPrep?.ready === ready) rewardedPrep = null
+  })
+  return ready
+}
+
 /**
  * Vidéo récompensée. Vrai si le joueur l'a regardée jusqu'au bout.
- * `ssvUserId` est transmis à AdMob, qui prévient le serveur (vérification côté serveur, lot C).
+ * `ssvUserId` est transmis à AdMob, qui prévient le serveur (vérification côté serveur).
  */
 export async function showRewarded(ssvUserId: string, customData: string): Promise<boolean> {
-  if (!canShowAds || !(await startAds())) return false
+  if (!(await prepareRewarded(ssvUserId, customData))) return false
+  rewardedPrep = null
   let rewarded = false
   const handle = await AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
     rewarded = true
   })
   try {
-    await AdMob.prepareRewardVideoAd({ adId: REWARDED_ID, isTesting: ADS_TESTING, ssv: { userId: ssvUserId, customData } })
     await AdMob.showRewardVideoAd()
   } catch {
-    /* pas de vidéo disponible, ou fermée avant la fin */
+    /* fermée avant la fin, ou vidéo expirée */
   } finally {
     void handle.remove()
   }

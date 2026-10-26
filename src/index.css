@@ -2078,17 +2078,24 @@ p {
   font-size: 13px;
 }
 
-.legal-links a,
-.legal-links .link-button {
+.legal-links a {
   color: var(--muted);
   text-decoration: none;
 }
 
-.legal-links .link-button {
+/* « Choix publicitaires » (V1.3) : sur sa propre ligne, avec une zone tactile de 44 px. */
+.ad-choices {
+  align-self: center;
+  margin-top: -20px;
+  min-height: 44px;
+  padding: 0 16px;
   background: none;
   border: 0;
-  padding: 0;
+  color: var(--muted);
   font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
 

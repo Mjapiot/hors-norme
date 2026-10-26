@@ -1,7 +1,7 @@
 import { addAdUnlock } from '../data/bank'
 import { claimAdTheme, fetchAdRemaining } from '../data/remote'
 import type { PaidTheme } from '../game/types'
-import { canShowAds, showRewarded } from './ads'
+import { canShowAds, prepareRewarded, showRewarded } from './ads'
 import { PACKS_ENABLED } from './packs'
 import { load, save } from './storage'
 
@@ -25,6 +25,9 @@ export function getDeviceId(): string {
   }
   return id
 }
+
+/** Prépare la vidéo d'un thème dès que la feuille s'ouvre (elle démarre ensuite sans attente). */
+export const preloadVideo = (theme: PaidTheme): void => void prepareRewarded(getDeviceId(), theme)
 
 /** Vidéos encore possibles aujourd'hui, ou null hors ligne. */
 export const remainingVideos = (): Promise<number | null> => fetchAdRemaining(getDeviceId())

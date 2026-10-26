@@ -51,12 +51,12 @@ export function Home({ canResume, onNew, onResume, onHelp }: Props) {
         <a href={`${SITE}/support`} target="_blank" rel="noreferrer">Aide</a>
         <a href={`${SITE}/confidentialite`} target="_blank" rel="noreferrer">Confidentialité</a>
         <a href={`${SITE}/mentions-legales`} target="_blank" rel="noreferrer">Mentions légales</a>
-        {adChoices && (
-          <button type="button" className="link-button" onClick={() => void showAdPrivacyOptions()}>
-            Choix publicitaires
-          </button>
-        )}
       </nav>
+      {adChoices && (
+        <button type="button" className="ad-choices" onClick={() => void showAdPrivacyOptions()}>
+          Choix publicitaires
+        </button>
+      )}
 
       {/* Le nombre de questions reste secret pour les joueurs : affiché seulement en mode admin. */}
       {isAdmin() && (

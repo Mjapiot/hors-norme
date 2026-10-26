@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { PlayCircle } from '@phosphor-icons/react/dist/csr/PlayCircle'
 import { THEMES } from '../game/types'
 import type { PaidTheme } from '../game/types'
-import { claimPending, remainingVideos, unlockWithVideo } from '../lib/adUnlock'
+import { claimPending, preloadVideo, remainingVideos, unlockWithVideo } from '../lib/adUnlock'
 import { packForTheme } from '../lib/packs'
 import { Ico, THEME_ICONS } from './Icons'
 
@@ -32,6 +32,7 @@ export function AdUnlockSheet({ theme, onUnlocked, onClose }: Props) {
       }
       const n = await remainingVideos()
       if (alive) setRemaining(n)
+      if (n) preloadVideo(theme)
     })()
     return () => {
       alive = false
