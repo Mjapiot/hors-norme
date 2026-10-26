@@ -85,11 +85,18 @@ interface ThemeTracker {
  * on évite les thèmes des dernières manches et on privilégie les moins joués.
  * À thème égal, l'ordre du paquet (jamais vues d'abord) est respecté.
  */
-function takeFresh<T extends Question>(pool: T[], used: Set<string>, themes: ThemeTracker, accept: (q: T) => boolean = () => true): T | undefined {
+function takeFresh<T extends Question>(
+  pool: T[],
+  used: Set<string>,
+  themes: ThemeTracker,
+  accept: (q: T) => boolean = () => true,
+  prefer: string[] = [],
+): T | undefined {
   const candidates = pool.flatMap((q, pos) => (accept(q) && subjectsOf(q).every((k) => !used.has(k)) ? [{ q, pos }] : []))
   if (candidates.length === 0) return undefined
+  const preferred = candidates.filter((c) => prefer.includes(c.q.theme))
   const fresh = candidates.filter((c) => !themes.recent.slice(-THEME_GAP).includes(c.q.theme))
-  const choices = fresh.length > 0 ? fresh : candidates
+  const choices = preferred.length > 0 ? preferred : fresh.length > 0 ? fresh : candidates
   const least = Math.min(...choices.map((c) => themes.counts.get(c.q.theme) ?? 0))
   const pick = choices.find((c) => (themes.counts.get(c.q.theme) ?? 0) === least)!
   pool.splice(pick.pos, 1)
@@ -102,6 +109,9 @@ function takeFresh<T extends Question>(pool: T[], used: Set<string>, themes: The
 /** Fourchette : il faut un rapport max/min qui ait du sens (quantité positive, pas une année ni des degrés). */
 export const fitsRange = (q: NumberQuestion) => q.answer > 0 && ['relative', 'tight', 'age'].includes(toleranceOf(q))
 
+/** Un thème mis en avant revient toutes les 3 manches (manches 1, 4, 7…). */
+const FEATURED_EVERY = 3
+
 export function isBonusSlot(index: number): boolean {
   return (index + 1) % BONUS_EVERY === 0
 }
@@ -111,6 +121,8 @@ export function buildRounds(
   config: GameConfig,
   seen: Set<string> = new Set(),
   rng: Rng = Math.random,
+  /** Thèmes mis en avant (débloqués par une vidéo) : une question sur trois, dès la première. */
+  featured: string[] = [],
 ): Round[] {
   const pool = questions.filter((q) => config.themes.includes(q.theme))
   const level = config.level ?? 'classique'
@@ -125,6 +137,7 @@ export function buildRounds(
   let bonusCount = 0
 
   for (let i = 0; i < total; i++) {
+    const prefer = i % FEATURED_EVERY === 0 ? featured : []
     let kind: RoundKind = 'classic'
     if (config.bonus && isBonusSlot(i)) {
       kind = BONUS_ROTATION[(rotationStart + bonusCount) % BONUS_ROTATION.length]
@@ -132,7 +145,7 @@ export function buildRounds(
     }
 
     if (kind === 'ranking') {
-      const question = takeFresh(rankings, usedSubjects, themes)
+      const question = takeFresh(rankings, usedSubjects, themes, undefined, prefer)
       if (question) {
         const indices = question.items.map((_, idx) => idx)
         let order = shuffle(indices, rng)
@@ -146,7 +159,7 @@ export function buildRounds(
     }
 
     if (kind === 'range') {
-      const question = takeFresh(numbers, usedSubjects, themes, fitsRange)
+      const question = takeFresh(numbers, usedSubjects, themes, fitsRange, prefer)
       if (question) {
         rounds.push({ kind: 'range', question })
         continue
@@ -156,7 +169,7 @@ export function buildRounds(
 
     if (kind === 'higherlower') {
       // Un seuil à ±20 % n'a pas de sens pour une année.
-      const question = takeFresh(numbers, usedSubjects, themes, (q) => !q.year)
+      const question = takeFresh(numbers, usedSubjects, themes, (q) => !q.year, prefer)
       if (question) {
         rounds.push({ kind: 'higherlower', question, threshold: makeThreshold(question.answer, rng) })
         continue
@@ -164,7 +177,7 @@ export function buildRounds(
       kind = 'chrono'
     }
 
-    const question = takeFresh(numbers, usedSubjects, themes)
+    const question = takeFresh(numbers, usedSubjects, themes, undefined, prefer)
     if (!question) break
     rounds.push({ kind: kind === 'chrono' ? 'chrono' : 'classic', question })
   }

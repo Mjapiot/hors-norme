@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { ArrowLeft } from '@phosphor-icons/react/dist/csr/ArrowLeft'
 import { Question } from '@phosphor-icons/react/dist/csr/Question'
 import { Flag } from '@phosphor-icons/react/dist/csr/Flag'
 import { Plus } from '@phosphor-icons/react/dist/csr/Plus'
 import { LockSimple } from '@phosphor-icons/react/dist/csr/LockSimple'
 import { PackStore } from '../components/PackStore'
-import { packQuestionCount } from '../data/bank'
+import { AdUnlockSheet } from '../components/AdUnlockSheet'
+import { adUnlockedThemes, packQuestionCount } from '../data/bank'
+import { REWARDED_ENABLED } from '../lib/adUnlock'
 import { PACKS, PACKS_ENABLED, packForTheme } from '../lib/packs'
 import { useOwnedThemes } from '../lib/purchases'
 import type { PaidTheme } from '../game/types'
@@ -92,8 +94,11 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
   const [store, setStore] = useState<{ focus: PaidTheme | null } | null>(null)
   const [startError, setStartError] = useState(false)
   const [teaser, setTeaser] = useState<PaidTheme | null>(null)
-  // Thèmes jouables : gratuits + premium achetés et téléchargés.
-  const playable: Theme[] = [...FREE_THEMES, ...owned.filter((t) => packQuestionCount(t) > 0)]
+  const [adTheme, setAdTheme] = useState<PaidTheme | null>(null)
+  // V1.3 : thèmes premium débloqués pour une partie par une vidéo récompensée.
+  const adThemes = adUnlockedThemes() as PaidTheme[]
+  // Thèmes jouables : gratuits + premium achetés et téléchargés + débloqués par une vidéo.
+  const playable: Theme[] = [...FREE_THEMES, ...owned.filter((t) => packQuestionCount(t) > 0), ...adThemes.filter((t) => !owned.includes(t))]
   const available = questions.filter((q) => cfg.themes.includes(q.theme) && q.type === 'number').length
   const needed = cfg.end.type === 'rounds' ? cfg.end.count : 16
 
@@ -105,6 +110,14 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
   }
 
   const setName = (i: number, value: string) => setCfg({ ...cfg, names: cfg.names.map((n, k) => (k === i ? value : n)) })
+
+  // Stables : la feuille s'en sert dans ses effets.
+  const closeAdSheet = useCallback(() => setAdTheme(null), [])
+  const unlockedByAd = useCallback((t: PaidTheme) => {
+    setAdTheme(null)
+    setStartError(false)
+    setCfg((c) => (c.themes.includes(t) ? c : { ...c, themes: [...c.themes, t] }))
+  }, [])
 
   const toggleTheme = (t: Theme) => {
     const themes = cfg.themes.includes(t) ? cfg.themes.filter((x) => x !== t) : [...cfg.themes, t]
@@ -295,7 +308,29 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
               </div>
             </>
           )}
-          {!PACKS_ENABLED && (
+          {REWARDED_ENABLED && (
+            <>
+              <h3>Thèmes premium</h3>
+              <div className="chips">
+                {PAID_THEMES.map((t) =>
+                  adThemes.includes(t) ? (
+                    <button key={t} type="button" className={`chip chip-premium${cfg.themes.includes(t) ? ' active' : ''}`} onClick={() => toggleTheme(t)}>
+                      <Ico icon={THEME_ICONS[t]} size={17} />
+                      {THEMES[t].label}
+                      <small>1 partie</small>
+                    </button>
+                  ) : (
+                    <button key={t} type="button" className="chip chip-locked" onClick={() => setAdTheme(t)} aria-label={`${THEMES[t].label} : thème premium, une vidéo pour une partie`}>
+                      <Ico icon={LockSimple} size={15} weight="fill" />
+                      {THEMES[t].label}
+                    </button>
+                  ),
+                )}
+              </div>
+              <p className="help">Une courte vidéo débloque un thème premium pour une partie.</p>
+            </>
+          )}
+          {!PACKS_ENABLED && !REWARDED_ENABLED && (
             <>
               <h3>
                 Thèmes premium
@@ -342,6 +377,7 @@ export function Setup({ initial, onBack, onStart, onHelp }: Props) {
         </section>
       )}
       {store && <PackStore focus={store.focus} onClose={() => setStore(null)} />}
+      {adTheme && <AdUnlockSheet theme={adTheme} onUnlocked={unlockedByAd} onClose={closeAdSheet} />}
     </main>
   )
 }

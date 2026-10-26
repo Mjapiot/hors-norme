@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { App as NativeApp } from '@capacitor/app'
 import { isNative } from './lib/native'
-import { getQuestions, syncPackQuestions, syncQuestions } from './data/bank'
+import { adUnlockedThemes, consumeAdUnlocks, getQuestions, syncPackQuestions, syncQuestions } from './data/bank'
 import { PACKS_ENABLED } from './lib/packs'
 import { getAppUserId, getOwnedThemes, refreshOwned } from './lib/purchases'
 import { startAds } from './lib/ads'
@@ -101,10 +101,14 @@ export default function App() {
     const available = new Set(questions.map((q) => q.theme))
     const config = { ...wanted, themes: wanted.themes.filter((t) => available.has(t)) }
     const seen = loadSeen()
-    const rounds = buildRounds(questions, config, seen)
+    // Un thème débloqué par une vidéo est mis en avant : le joueur doit en profiter.
+    const featured = config.themes.filter((t) => adUnlockedThemes().includes(t))
+    const rounds = buildRounds(questions, config, seen, Math.random, featured)
     if (rounds.length === 0) return false
     save(KEYS.config, config)
     markSeen(rounds.map((r) => r.question.id))
+    // Un thème débloqué par une vidéo vaut pour une seule partie (la partie garde ses questions).
+    consumeAdUnlocks(config.themes)
     dispatch({ type: 'start', config, rounds, duels: buildDuels(questions, rounds, config.themes, seen) })
     track('game_start', { mode: config.mode, players: config.names.length, end: config.end.type === 'rounds' ? `${config.end.count}q` : `${config.end.points}pts` })
     setScreen('game')

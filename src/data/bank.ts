@@ -56,10 +56,43 @@ const listeners = new Set<() => void>()
 // Questions des thèmes premium achetés (cache séparé, jouable hors ligne).
 const PACK_CACHE_KEY = 'hn:bank-packs:v1'
 let packBank: Question[] = sanitize(load<unknown>(PACK_CACHE_KEY, []))
-let combined: Question[] = [...bank, ...packBank]
+
+// V1.3 : thèmes premium débloqués pour une seule partie par une vidéo récompensée.
+const AD_CACHE_KEY = 'hn:bank-ad:v1'
+const AD_KEEP_MS = 24 * 3600_000
+interface AdUnlock {
+  theme: string
+  questions: Question[]
+  until: number
+}
+let adUnlocks: AdUnlock[] = load<AdUnlock[]>(AD_CACHE_KEY, [])
+  .filter((u) => u && typeof u.theme === 'string' && typeof u.until === 'number' && u.until > Date.now())
+  .map((u) => ({ ...u, questions: sanitize(u.questions) }))
+  .filter((u) => u.questions.length > 0)
+const adQuestions = () => adUnlocks.flatMap((u) => u.questions)
+
+let combined: Question[] = [...bank, ...packBank, ...adQuestions()]
 const recombine = () => {
-  combined = [...bank, ...packBank]
+  combined = [...bank, ...packBank, ...adQuestions()]
   listeners.forEach((l) => l())
+}
+
+/** Thèmes débloqués par une vidéo et pas encore joués. */
+export const adUnlockedThemes = (): string[] => adUnlocks.map((u) => u.theme)
+
+/** Une vidéo regardée : le thème est jouable pour la prochaine partie (gardé 24 h au plus). */
+export function addAdUnlock(theme: string, questions: Question[]): void {
+  adUnlocks = [...adUnlocks.filter((u) => u.theme !== theme), { theme, questions, until: Date.now() + AD_KEEP_MS }]
+  save(AD_CACHE_KEY, adUnlocks)
+  recombine()
+}
+
+/** Au lancement d'une partie : les thèmes débloqués par une vidéo et choisis sont consommés. */
+export function consumeAdUnlocks(themes: string[]): void {
+  if (!adUnlocks.some((u) => themes.includes(u.theme))) return
+  adUnlocks = adUnlocks.filter((u) => !themes.includes(u.theme))
+  save(AD_CACHE_KEY, adUnlocks)
+  recombine()
 }
 
 export function getQuestions(): Question[] {

@@ -94,3 +94,34 @@ export async function fetchPackQuestions(appUserId: string): Promise<{ themes: s
     return null
   }
 }
+
+/** Vidéos récompensées encore possibles aujourd'hui (fonction Edge `ad-unlock`). Null hors ligne. */
+export async function fetchAdRemaining(deviceId: string): Promise<number | null> {
+  const data = await callAdUnlock({ deviceId, action: 'status' })
+  return typeof data?.remaining === 'number' ? data.remaining : null
+}
+
+/**
+ * Consomme le droit créé par une vidéo regardée : questions du thème pour une partie.
+ * `ready: false` tant que le rappel de Google n'est pas arrivé côté serveur.
+ */
+export async function claimAdTheme(deviceId: string, theme: string): Promise<{ ready: boolean; remaining: number; questions: Question[] } | null> {
+  const data = await callAdUnlock({ deviceId, action: 'claim', theme })
+  if (!data || typeof data.ready !== 'boolean') return null
+  const questions = Array.isArray(data.questions) ? (data.questions as QuestionRow[]).map(rowToQuestion).filter((q): q is Question => q !== null) : []
+  return { ready: data.ready, remaining: typeof data.remaining === 'number' ? data.remaining : 0, questions }
+}
+
+async function callAdUnlock(body: Record<string, string>): Promise<{ ready?: unknown; remaining?: unknown; questions?: unknown } | null> {
+  if (!hasRemote) return null
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ad-unlock`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY!, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    return res.ok ? await res.json() : null
+  } catch {
+    return null
+  }
+}

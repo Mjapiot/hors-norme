@@ -239,6 +239,15 @@ describe('deck', () => {
     }
   })
 
+  it('met en avant un thème débloqué par une vidéo : une manche sur trois, dès la première', () => {
+    const featured = 'animaux'
+    for (let seed = 1; seed <= 50; seed++) {
+      const rounds = buildRounds(QUESTIONS, config({ end: { type: 'rounds', count: 5 } }), new Set(), seeded(seed), [featured])
+      expect(rounds[0].question.theme).toBe(featured)
+      expect(rounds[3].question.theme).toBe(featured)
+    }
+  })
+
   it('construit le bon nombre de manches, sans doublon, avec un bonus toutes les 4', () => {
     const rounds = buildRounds(QUESTIONS, config(), new Set(), seeded(42))
     expect(rounds).toHaveLength(10)
