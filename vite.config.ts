@@ -50,10 +50,9 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_PACKS': JSON.stringify(env.PACKS === '1'),
       // Clé publique RevenueCat iOS (« appl_… », faite pour être embarquée dans l'app).
       'import.meta.env.VITE_REVENUECAT_IOS_KEY': JSON.stringify(pick(env, 'VITE_REVENUECAT_IOS_KEY', 'REVENUECAT_IOS_KEY')),
-      // V1.3 : publicités AdMob. ADS=1 au build pour les activer ; sans identifiants, blocs de démonstration de Google.
+      // V1.3 : publicités AdMob. ADS=1 au build pour les activer ; ADS_TEST=1 pour les blocs de démonstration de Google.
       'import.meta.env.VITE_ADS': JSON.stringify(env.ADS === '1'),
-      'import.meta.env.VITE_ADMOB_INTERSTITIAL_IOS': JSON.stringify(pick(env, 'VITE_ADMOB_INTERSTITIAL_IOS', 'ADMOB_INTERSTITIAL_IOS')),
-      'import.meta.env.VITE_ADMOB_REWARDED_IOS': JSON.stringify(pick(env, 'VITE_ADMOB_REWARDED_IOS', 'ADMOB_REWARDED_IOS')),
+      'import.meta.env.VITE_ADS_TEST': JSON.stringify(env.ADS_TEST === '1'),
     },
     plugins: [
       react(),

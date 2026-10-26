@@ -3,7 +3,7 @@
 -- puis consommée par la fonction SQL `ad_unlock` qui renvoie les questions du thème. Aucun accès avec la clé publique :
 -- RLS activée sans aucune règle, seules les fonctions Edge (clé service_role) lisent et écrivent.
 
-create table public.ad_grants (
+create table if not exists public.ad_grants (
   transaction_id text primary key,
   device_id text not null,
   theme text not null check (theme in ('football', 'rugby', 'cinema', 'musique', 'jo')),
@@ -12,7 +12,7 @@ create table public.ad_grants (
   used_at timestamptz
 );
 
-create index ad_grants_device_recent on public.ad_grants (device_id, created_at desc);
+create index if not exists ad_grants_device_recent on public.ad_grants (device_id, created_at desc);
 
 alter table public.ad_grants enable row level security;
 revoke all on public.ad_grants from anon, authenticated;

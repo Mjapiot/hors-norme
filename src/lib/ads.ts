@@ -6,21 +6,24 @@ import { isNative, platform } from './native'
  * Publicités Google AdMob (V1.3, iOS d'abord).
  * - Interstitiel à chaque fin de partie, vidéo récompensée pour jouer une partie avec un thème premium.
  * - Consentement RGPD (UMP de Google) puis demande de suivi d'Apple (ATT) avant toute pub.
- * - Sans identifiants AdMob au build, on utilise les blocs de démonstration de Google (pubs de test).
+ * - `ADS_TEST=1` au build : blocs de démonstration de Google (pubs de test).
  * - Hors connexion ou si une pub ne charge pas : le jeu continue, sans attente ni message.
  */
 
 /** Interrupteur de la V1.3 : `ADS=1` au build. Désactivé tant que la version avec pubs n'est pas publiée. */
 export const ADS_ENABLED = import.meta.env.VITE_ADS === true
 
+// Blocs AdMob de Hors Norme (identifiants publics, compte éditeur pub-8821579567596008).
+const PROD_INTERSTITIAL = 'ca-app-pub-8821579567596008/1957624004' // « HN fin de partie »
+const PROD_REWARDED = 'ca-app-pub-8821579567596008/1923506979' // « HN theme premium » (vérification côté serveur : ad-reward)
 // Blocs de démonstration iOS de Google : ils renvoient toujours une pub de test.
 const DEMO_INTERSTITIAL = 'ca-app-pub-3940256099942544/4411468910'
 const DEMO_REWARDED = 'ca-app-pub-3940256099942544/1712485313'
 
-const INTERSTITIAL_ID: string = import.meta.env.VITE_ADMOB_INTERSTITIAL_IOS || DEMO_INTERSTITIAL
-const REWARDED_ID: string = import.meta.env.VITE_ADMOB_REWARDED_IOS || DEMO_REWARDED
-/** Vrai tant que les vrais blocs AdMob ne sont pas fournis au build. */
-export const ADS_TESTING = INTERSTITIAL_ID === DEMO_INTERSTITIAL || REWARDED_ID === DEMO_REWARDED
+/** `ADS_TEST=1` au build : pubs de démonstration (développement). Le simulateur reçoit toujours des pubs de test. */
+export const ADS_TESTING = import.meta.env.VITE_ADS_TEST === true
+const INTERSTITIAL_ID = ADS_TESTING ? DEMO_INTERSTITIAL : PROD_INTERSTITIAL
+const REWARDED_ID = ADS_TESTING ? DEMO_REWARDED : PROD_REWARDED
 
 export const canShowAds = ADS_ENABLED && isNative && platform === 'ios'
 
