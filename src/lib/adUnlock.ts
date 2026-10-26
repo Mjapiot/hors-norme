@@ -8,7 +8,7 @@ import { load, save } from './storage'
 /*
  * V1.3 : jouer une partie avec un thème premium en regardant une vidéo récompensée.
  * La vidéo n'est jamais crue sur parole par l'app : Google prévient le serveur (fonction `ad-reward`),
- * puis l'app récupère les questions auprès de `ad-unlock`, qui consomme le droit.
+ * puis l'app récupère les questions auprès de la fonction SQL `ad_unlock`, qui consomme le droit.
  */
 
 /** Vidéos récompensées proposées à la place des achats intégrés (iOS, version avec pubs). */

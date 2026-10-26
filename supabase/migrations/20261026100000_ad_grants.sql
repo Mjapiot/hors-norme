@@ -1,6 +1,6 @@
 -- V1.3 : une vidéo récompensée AdMob regardée jusqu'au bout = une partie avec un thème premium.
 -- Une ligne est créée par la fonction Edge `ad-reward` quand Google confirme la vidéo (signature vérifiée),
--- puis consommée par `ad-unlock` qui renvoie les questions du thème. Aucun accès avec la clé publique :
+-- puis consommée par la fonction SQL `ad_unlock` qui renvoie les questions du thème. Aucun accès avec la clé publique :
 -- RLS activée sans aucune règle, seules les fonctions Edge (clé service_role) lisent et écrivent.
 
 create table public.ad_grants (
